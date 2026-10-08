@@ -18,59 +18,59 @@
     "30D": {
       "train_rows": 1227,
       "test_rows": 300,
-      "calibrated_temperature": 1.0,
+      "calibrated_temperature": 1.8,
       "model": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.953,
+        "macro_f1": 0.845
       },
       "baseline_persistence": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.77,
+        "macro_f1": 0.551
       },
       "baseline_calendar_climatology": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.87,
+        "macro_f1": 0.679
       },
-      "log_loss_raw": 0.0,
-      "log_loss_calibrated": 0.0
+      "log_loss_raw": 0.117,
+      "log_loss_calibrated": 0.129
     },
     "60D": {
       "train_rows": 1215,
       "test_rows": 288,
-      "calibrated_temperature": 1.0,
+      "calibrated_temperature": 1.4,
       "model": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.938,
+        "macro_f1": 0.79
       },
       "baseline_persistence": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.628,
+        "macro_f1": 0.444
       },
       "baseline_calendar_climatology": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.865,
+        "macro_f1": 0.679
       },
-      "log_loss_raw": 0.0,
-      "log_loss_calibrated": 0.0
+      "log_loss_raw": 0.182,
+      "log_loss_calibrated": 0.167
     },
     "90D": {
       "train_rows": 1200,
       "test_rows": 273,
-      "calibrated_temperature": 1.0,
+      "calibrated_temperature": 1.6,
       "model": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.927,
+        "macro_f1": 0.72
       },
       "baseline_persistence": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.443,
+        "macro_f1": 0.312
       },
       "baseline_calendar_climatology": {
-        "accuracy": 1.0,
-        "macro_f1": 0.333
+        "accuracy": 0.868,
+        "macro_f1": 0.683
       },
-      "log_loss_raw": 0.0,
-      "log_loss_calibrated": 0.0
+      "log_loss_raw": 0.17,
+      "log_loss_calibrated": 0.177
     }
   }
 }

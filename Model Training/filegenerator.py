@@ -42,19 +42,19 @@ ys = np.array([year_strength[y] for y in dates.year])
 # --- SCENARIO 1: REALISTIC BASELINE (DEFAULT ACTIVE) ---
 # Realistic Ganges monsoon cycle, dry-season flow recession, and lunar tides.
 # Expected UI: Seasonal mix (Shyamnagar/Koyra Red/Amber; Bagerhat Amber/Green).
-# monsoon = np.exp(-((doy - 225) ** 2) / (2 * 45.0 ** 2))
-# tail = np.where(doy > 260, 2600 * np.exp(-(doy - 260) / 45.0), 0.0)
-# base_discharge = np.clip((350 + 13500 * monsoon + tail) * (ys ** 1.4), 60, None)
-# lunar_phase = np.abs(np.sin(2 * np.pi * doy / 14.765))
-# test_mode = "REALISTIC"
+monsoon = np.exp(-((doy - 225) ** 2) / (2 * 45.0 ** 2))
+tail = np.where(doy > 260, 2600 * np.exp(-(doy - 260) / 45.0), 0.0)
+base_discharge = np.clip((350 + 13500 * monsoon + tail) * (ys ** 1.4), 60, None)
+lunar_phase = np.abs(np.sin(2 * np.pi * doy / 14.765))
+test_mode = "REALISTIC"
 
 # --- SCENARIO 2: EXTREME MEGA-FLOOD (100% FRESHWATER FLUSH) ---
 # Continuous massive 25,000 m3/s flood. Flushes all sea salt back to the Bay of Bengal.
 # Expected UI: ALL 3 stations turn GREEN (Low Risk, >95% Safe confidence, EC < 400).
-monsoon = np.ones(len(dates))
-base_discharge = np.full(len(dates), 25000.0)
-lunar_phase = np.zeros(len(dates))
-test_mode = "MEGA_FLOOD"
+# monsoon = np.ones(len(dates))
+# base_discharge = np.full(len(dates), 25000.0)
+# lunar_phase = np.zeros(len(dates))
+# test_mode = "MEGA_FLOOD"
 
 # --- SCENARIO 3: CATASTROPHIC MEGA-DROUGHT (ZERO UPSTREAM FRESHWATER) ---
 # Total upstream river cutoff (Farakka/Gorai dry-out) + zero rainfall across delta.

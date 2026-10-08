@@ -10,47 +10,47 @@
       "latitude": 22.33021,
       "longitude": 89.10254,
       "sea_distance_km": 28,
-      "current_ec": 274,
-      "current_chloride": 155,
+      "current_ec": 8162,
+      "current_chloride": 4618,
       "forecast": {
         "30d": {
           "lead_days": 28,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
-            "medium": 1,
-            "high": 1
+            "low": 2,
+            "medium": 2,
+            "high": 96
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
         "60d": {
           "lead_days": 56,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
+            "low": 1,
             "medium": 1,
-            "high": 1
+            "high": 97
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
         "90d": {
           "lead_days": 91,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
-            "medium": 1,
-            "high": 1
+            "low": 2,
+            "medium": 2,
+            "high": 96
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         }
       }
     },
@@ -63,47 +63,47 @@
       "latitude": 22.64626,
       "longitude": 89.80163,
       "sea_distance_km": 68,
-      "current_ec": 289,
-      "current_chloride": 155,
+      "current_ec": 6371,
+      "current_chloride": 3539,
       "forecast": {
         "30d": {
           "lead_days": 28,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
-            "medium": 1,
-            "high": 1
+            "low": 2,
+            "medium": 2,
+            "high": 96
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
         "60d": {
           "lead_days": 56,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
+            "low": 1,
             "medium": 1,
-            "high": 1
+            "high": 97
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
         "90d": {
           "lead_days": 91,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
-            "medium": 1,
-            "high": 1
+            "low": 2,
+            "medium": 2,
+            "high": 96
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         }
       }
     },
@@ -116,47 +116,47 @@
       "latitude": 22.34185,
       "longitude": 89.30042,
       "sea_distance_km": 22,
-      "current_ec": 272,
-      "current_chloride": 152,
+      "current_ec": 8116,
+      "current_chloride": 4568,
       "forecast": {
         "30d": {
           "lead_days": 28,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
-            "medium": 1,
-            "high": 1
+            "low": 2,
+            "medium": 2,
+            "high": 96
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
         "60d": {
           "lead_days": 56,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
+            "low": 1,
             "medium": 1,
-            "high": 1
+            "high": 97
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
         "90d": {
           "lead_days": 91,
-          "risk_level": "Low",
-          "risk_code": 0,
+          "risk_level": "High",
+          "risk_code": 2,
           "probabilities": {
-            "low": 98,
-            "medium": 1,
-            "high": 1
+            "low": 2,
+            "medium": 2,
+            "high": 96
           },
-          "primary_driver": "Seasonal Estuarine Hydrodynamics",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         }
       }
     }
