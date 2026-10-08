@@ -14,3 +14,11 @@ const eslintConfig = defineConfig([
 ]);
 
 export default eslintConfig;
+
+
+// export default {
+//   plugins: {
+//     tailwindcss: {},
+//     autoprefixer: {},
+//   },
+// };s
