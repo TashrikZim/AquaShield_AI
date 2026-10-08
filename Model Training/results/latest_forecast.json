@@ -1,0 +1,155 @@
+{
+  "synthetic_demo_data": true,
+  "stations": [
+    {
+      "station_id": "SW135",
+      "station_name": "Shyamnagar",
+      "district": "Satkhira",
+      "upazila": "Shyamnagar",
+      "river": "Kholpetua River",
+      "latitude": 22.33021,
+      "longitude": 89.10254,
+      "as_of": "2024-12-25",
+      "current_ec_uscm": 8162,
+      "current_chloride_ppm": 4618,
+      "forecast": {
+        "30d": {
+          "days_ahead": 28,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.019,
+            "medium": 0.018,
+            "high": 0.963
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        },
+        "60d": {
+          "days_ahead": 56,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.014,
+            "medium": 0.014,
+            "high": 0.972
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        },
+        "90d": {
+          "days_ahead": 91,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.019,
+            "medium": 0.017,
+            "high": 0.964
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        }
+      }
+    },
+    {
+      "station_id": "SW1",
+      "station_name": "Bagerhat",
+      "district": "Bagerhat",
+      "upazila": "Bagerhat Sadar",
+      "river": "Alaipur Khal Daratona",
+      "latitude": 22.64626,
+      "longitude": 89.80163,
+      "as_of": "2024-12-25",
+      "current_ec_uscm": 6371,
+      "current_chloride_ppm": 3539,
+      "forecast": {
+        "30d": {
+          "days_ahead": 28,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.019,
+            "medium": 0.018,
+            "high": 0.963
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        },
+        "60d": {
+          "days_ahead": 56,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.014,
+            "medium": 0.013,
+            "high": 0.972
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        },
+        "90d": {
+          "days_ahead": 91,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.019,
+            "medium": 0.018,
+            "high": 0.963
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        }
+      }
+    },
+    {
+      "station_id": "SW242",
+      "station_name": "Koyra",
+      "district": "Khulna",
+      "upazila": "Koyra",
+      "river": "Kobadak River",
+      "latitude": 22.34185,
+      "longitude": 89.30042,
+      "as_of": "2024-12-25",
+      "current_ec_uscm": 8116,
+      "current_chloride_ppm": 4568,
+      "forecast": {
+        "30d": {
+          "days_ahead": 28,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.019,
+            "medium": 0.018,
+            "high": 0.963
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        },
+        "60d": {
+          "days_ahead": 56,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.014,
+            "medium": 0.014,
+            "high": 0.972
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        },
+        "90d": {
+          "days_ahead": 91,
+          "risk_level": "High",
+          "risk_code": 2,
+          "probabilities": {
+            "low": 0.019,
+            "medium": 0.018,
+            "high": 0.963
+          },
+          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+        }
+      }
+    }
+  ]
+}
