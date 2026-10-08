@@ -1,7 +1,7 @@
 """
-AquaShield AI - Forecasting Engine Trainer
+AquaShield AI - Forecasting Engine Trainer & Direct Frontend Sync
 Trains 30, 60, and 90-day predictive models with leak-free temporal splitting,
-baseline benchmarking, temperature calibration, and dashboard exports.
+temperature calibration, baseline benchmarking, and direct auto-sync into Next.js.
 """
 import argparse
 import json
@@ -84,9 +84,13 @@ df = pd.read_csv(CSV)
 df["DATE_DT"] = pd.to_datetime(df["DATE"], format="%d-%b-%y")
 synthetic = bool(df["DATA_SOURCE"].astype(str).str.contains("SYNTHETIC").any()) if "DATA_SOURCE" in df else False
 
-out_dir, model_dir = Path("results"), Path("models")
+out_dir = Path("results")
+model_dir = Path("models")
+nextjs_dir = Path("../frontend/public/data")
+
 out_dir.mkdir(exist_ok=True)
 model_dir.mkdir(exist_ok=True)
+nextjs_dir.mkdir(parents=True, exist_ok=True)
 
 metrics = {
     "synthetic_demo_data": synthetic,
@@ -117,20 +121,17 @@ for name, days in HORIZONS.items():
     if len(train) < 100 or len(test) < 20:
         continue
 
-    # Temperature scaling on held-out validation year (2022)
     T = 1.0
     if len(fit_part) >= 100 and len(calib_part) >= 30:
         m0 = make_model().fit(fit_part[FEATURES], fit_part[target])
         T = find_temperature(proba3(m0, calib_part[FEATURES]), calib_part[target].values)
 
-    # Train model on all historical training data
     model = make_model().fit(train[FEATURES], train[target])
     p_raw = proba3(model, test[FEATURES])
     p_cal = apply_temperature(p_raw, T)
     pred = p_cal.argmax(axis=1)
     y = test[target].values
 
-    # Baselines
     persist = pd.cut(
         test["EC HIGHTIDE micromho/cm"],
         bins=[-np.inf, THRESHOLDS[0] - 1e-9, THRESHOLDS[1], np.inf],
@@ -153,7 +154,7 @@ for name, days in HORIZONS.items():
     print(f"  AquaShield AI Acc: {m['model']['accuracy']} | Macro-F1: {m['model']['macro_f1']}")
     print(f"  Persistence   Acc: {m['baseline_persistence']['accuracy']} | Macro-F1: {m['baseline_persistence']['macro_f1']}")
     print(f"  Calendar Climatology: {m['baseline_calendar_climatology']['accuracy']} | Macro-F1: {m['baseline_calendar_climatology']['macro_f1']}")
-    print(f"  Probability Calibration: Temp={T:.2f} (Log-Loss: {m['log_loss_raw']} -> {m['log_loss_calibrated']})\n")
+    print(f"  Probability Calibration: Temp={T:.2f}\n")
 
     t = test[["STATION ID", "STATION", "DATE_DT", "EC HIGHTIDE micromho/cm"]].copy()
     t.columns = ["station_id", "station_name", "date", "ec_now_uscm"]
@@ -167,7 +168,6 @@ for name, days in HORIZONS.items():
     if fi is not None:
         importances.append(pd.DataFrame({"horizon": name, "feature": FEATURES, "importance": fi}))
 
-    # Train production model bundle on all available records
     final_model = make_model().fit(d[FEATURES], d[target])
     final_bundles[name] = {
         "model": final_model, "features": FEATURES, "temperature": T,
@@ -182,18 +182,23 @@ if importances:
         out_dir / "feature_importance.csv", index=False
     )
 
-# Pre-computed Live Forecast for Frontend Dashboard
 src = df if args.as_of is None else df[df["DATE_DT"] <= pd.Timestamp(args.as_of)]
 latest = src.sort_values("DATE_DT").groupby("STATION ID").tail(1)
 stations_output = []
 
 for _, row in latest.iterrows():
+    sea_dist = 68 if row["STATION ID"] == "SW1" else (28 if row["STATION ID"] == "SW135" else 22)
     entry = {
-        "station_id": row["STATION ID"], "station_name": row["STATION"],
-        "district": row["DISTRICT"], "upazila": row["UPAZILA"], "river": row["RIVER"],
-        "latitude": float(row["LATITUDE"]), "longitude": float(row["LONGITUDE"]),
-        "as_of": str(row["DATE_DT"].date()), "current_ec_uscm": int(row["EC HIGHTIDE micromho/cm"]),
-        "current_chloride_ppm": int(row["CHLORIDE HIGHTIDE PPM"]),
+        "station_id": row["STATION ID"],
+        "station_name": row["STATION"],
+        "district": row["DISTRICT"],
+        "upazila": row["UPAZILA"],
+        "river": row["RIVER"],
+        "latitude": float(row["LATITUDE"]),
+        "longitude": float(row["LONGITUDE"]),
+        "sea_distance_km": sea_dist,
+        "current_ec": int(row["EC HIGHTIDE micromho/cm"]),
+        "current_chloride": int(row["CHLORIDE HIGHTIDE PPM"]),
         "forecast": {}
     }
     X = row[FEATURES].to_frame().T.astype(float)
@@ -201,7 +206,6 @@ for _, row in latest.iterrows():
         p = display_probs(apply_temperature(proba3(b["model"], X), b["temperature"]))[0]
         level = RISK_NAMES[int(p.argmax())]
         
-        # Primary causal driver identification
         if row["UPSTREAM_DISCHARGE_M3S"] < 400:
             driver = "Upstream River Discharge Deficit (<400 m³/s)"
         elif row["TIDAL_SPRING_INDEX"] > 0.7:
@@ -212,20 +216,26 @@ for _, row in latest.iterrows():
             driver = "Seasonal Estuarine Hydrodynamics"
 
         entry["forecast"][name.lower()] = {
-            "days_ahead": b["horizon_days"],
+            "lead_days": b["horizon_days"],
             "risk_level": level,
             "risk_code": int(p.argmax()),
             "probabilities": {
-                "low": round(float(p[0]), 3),
-                "medium": round(float(p[1]), 3),
-                "high": round(float(p[2]), 3)
+                "low": int(round(float(p[0]) * 100)),
+                "medium": int(round(float(p[1]) * 100)),
+                "high": int(round(float(p[2]) * 100))
             },
             "primary_driver": driver,
+            "action_title": f"{level} Risk Advisory",
             "recommended_action": ACTIONS[level]
         }
     stations_output.append(entry)
 
-(out_dir / "latest_forecast.json").write_text(json.dumps(
-    {"synthetic_demo_data": synthetic, "stations": stations_output}, indent=2
-))
-print(f"Artifacts saved to {out_dir}/ and models saved to {model_dir}/")
+forecast_payload = json.dumps({"synthetic_demo_data": synthetic, "stations": stations_output}, indent=2)
+
+# Write to both Python results folder and Next.js public folder
+(out_dir / "latest_forecast.json").write_text(forecast_payload)
+(nextjs_dir / "latest_forecast.json").write_text(forecast_payload)
+
+print(f"\n[AUTO-SYNC COMPLETED]")
+print(f"[*] Updated results/latest_forecast.json")
+print(f"[*] Synchronized directly into frontend/public/data/latest_forecast.json")

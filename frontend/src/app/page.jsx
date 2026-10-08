@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { 
   Droplets, ShieldAlert, Activity, AlertTriangle, 
-  Layers, Sliders, CheckCircle2, ChevronRight, BarChart3, Info
+  Sliders, BarChart3, Info, RefreshCw
 } from "lucide-react";
-import { STATIONS, MODEL_METRICS } from "@/data/salinityData";
+import { STATIONS as FALLBACK_STATIONS, MODEL_METRICS } from "@/data/salinityData";
 
-// Dynamic import with SSR disabled to prevent Leaflet hydration errors
+// Dynamic import with SSR disabled to prevent Leaflet hydration crash
 const MapComponent = dynamic(() => import("@/components/Map"), {
   ssr: false,
   loading: () => (
@@ -19,20 +19,38 @@ const MapComponent = dynamic(() => import("@/components/Map"), {
 });
 
 export default function Dashboard() {
-  const [stations] = useState(STATIONS);
-  const [selectedStation, setSelectedStation] = useState(STATIONS[1]); // Default to Shyamnagar
+  const [stations, setStations] = useState(FALLBACK_STATIONS);
+  const [selectedStation, setSelectedStation] = useState(FALLBACK_STATIONS[1]); // Default to Shyamnagar
   const [horizon, setHorizon] = useState("30D");
   const [showSim, setShowSim] = useState(false);
   const [showValidation, setShowValidation] = useState(false);
+  const [isSynced, setIsSynced] = useState(false);
 
-  // Climate stress simulator local state
+  // Climate stress simulator state
   const [dischargeReduction, setDischargeReduction] = useState(40);
   const [droughtSeverity, setDroughtSeverity] = useState("Severe");
 
-  const fc = selectedStation.forecast[horizon.toLowerCase()];
-  const currentMetrics = MODEL_METRICS.horizons[horizon];
+  // Fetch pre-computed forecast written directly by train_model_final.py
+  useEffect(() => {
+    fetch("/data/latest_forecast.json")
+      .then((res) => {
+        if (!res.ok) throw new Error("Forecast file not found");
+        return res.json();
+      })
+      .then((data) => {
+        if (data && data.stations && data.stations.length > 0) {
+          setStations(data.stations);
+          setSelectedStation(data.stations[1]); // SW135
+          setIsSynced(true);
+        }
+      })
+      .catch((err) => {
+        console.warn("Using built-in fallback dataset:", err);
+      });
+  }, []);
 
-  // Dynamic risk calculation for simulator preview
+  const fc = selectedStation?.forecast?.[horizon.toLowerCase()] || selectedStation?.forecast?.["30d"];
+
   const getSimulatedRisk = () => {
     if (dischargeReduction > 50 || droughtSeverity === "Extreme") return "High";
     if (dischargeReduction > 25) return "Medium";
@@ -50,8 +68,9 @@ export default function Dashboard() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-base font-bold tracking-tight text-white leading-none">AquaShield AI</h1>
-              <span className="bg-cyan-950 text-cyan-400 border border-cyan-800 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full">
-                Hack for Humanity 2026
+              <span className="bg-cyan-950 text-cyan-400 border border-cyan-800 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                {isSynced ? <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> : null}
+                {isSynced ? "Pipeline Synced" : "Demo Mode"}
               </span>
             </div>
             <p className="text-xs text-slate-400 mt-1">Predictive Coastal Salinity Decision Support (Southwest Bangladesh)</p>
@@ -86,7 +105,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Main Workspace */}
+      {/* Main Grid View */}
       <div className="flex flex-1 overflow-hidden relative">
         {/* Left Map Section (65%) */}
         <div className="w-[65%] h-full relative">
@@ -97,7 +116,7 @@ export default function Dashboard() {
             horizon={horizon}
           />
 
-          {/* Map Overlay Badge */}
+          {/* Map Legend Overlay */}
           <div className="absolute top-4 left-4 z-[400] bg-slate-900/90 backdrop-blur border border-slate-800 rounded-lg px-3 py-2 text-xs shadow-xl">
             <p className="font-semibold text-slate-200">Pilot Estuary Monitoring Zone</p>
             <p className="text-[10px] text-slate-400 mt-0.5">Click station pin to inspect predictive drivers</p>
@@ -111,160 +130,168 @@ export default function Dashboard() {
 
         {/* Right Intelligence Sidebar (35%) */}
         <div className="w-[35%] h-full overflow-y-auto p-6 bg-slate-900/70 border-l border-slate-800 flex flex-col gap-4">
-          {/* Station Details Header */}
-          <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-            <div className="flex justify-between items-start">
-              <div>
-                <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
-                  Station ID: {selectedStation.station_id}
-                </span>
-                <h2 className="text-xl font-bold mt-1.5 text-white">{selectedStation.station_name}</h2>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {selectedStation.upazila}, {selectedStation.district} • {selectedStation.river}
-                </p>
-              </div>
-              <div className="text-right">
-                <span className="text-[10px] uppercase font-mono text-slate-500 block">Coast Proximity</span>
-                <span className="text-xs font-bold text-slate-200">{selectedStation.sea_distance_km} km to Sea</span>
-              </div>
-            </div>
-
-            {/* Current River Baseline Gauges */}
-            <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-800 text-xs">
-              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
-                <span className="text-slate-500 text-[10px] uppercase font-mono block">Current River EC</span>
-                <span className="text-sm font-bold text-slate-200">
-                  {selectedStation.current_ec.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">µmho/cm</span>
-                </span>
-              </div>
-              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
-                <span className="text-slate-500 text-[10px] uppercase font-mono block">Chloride Concentration</span>
-                <span className="text-sm font-bold text-slate-200">
-                  {selectedStation.current_chloride.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">PPM</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Calibrated Predictive Risk Card */}
-          <div className={`p-4 rounded-xl border transition-all ${
-            fc.risk_level === "High"
-              ? "bg-rose-950/20 border-rose-800/60 text-rose-200"
-              : fc.risk_level === "Medium"
-              ? "bg-amber-950/20 border-amber-800/60 text-amber-200"
-              : "bg-emerald-950/20 border-emerald-800/60 text-emerald-200"
-          }`}>
-            <div className="flex justify-between items-center">
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
-                  Forecast Lead Time: {horizon} ({fc.lead_days} Days)
-                </span>
-                <span className="text-lg font-bold text-white mt-0.5 block">
-                  {fc.risk_level} Salinity Intrusion Risk
-                </span>
-              </div>
-              <span className={`px-3 py-1 text-xs font-bold rounded-lg border ${
-                fc.risk_level === "High" 
-                  ? "bg-rose-500 text-white border-rose-400" 
-                  : fc.risk_level === "Medium" 
-                  ? "bg-amber-500 text-slate-950 border-amber-400" 
-                  : "bg-emerald-500 text-white border-emerald-400"
-              }`}>
-                {fc.risk_level} Risk
-              </span>
-            </div>
-
-            {/* Probability Distribution */}
-            <div className="mt-4">
-              <div className="flex justify-between text-[11px] text-slate-400 mb-1.5 font-mono">
-                <span>Model Confidence</span>
-                <span>Calibrated (T-Scaled)</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
-                  <span className="text-slate-400 text-[10px] block">Safe (&lt;1.5k)</span>
-                  <span className="font-bold text-emerald-400">{fc.probabilities.low}%</span>
-                </div>
-                <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
-                  <span className="text-slate-400 text-[10px] block">Warning (1.5-3k)</span>
-                  <span className="font-bold text-amber-400">{fc.probabilities.medium}%</span>
-                </div>
-                <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
-                  <span className="text-slate-400 text-[10px] block">Hazard (&gt;3k)</span>
-                  <span className="font-bold text-rose-400">{fc.probabilities.high}%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Primary Causal Driver */}
-            <div className="mt-3.5 pt-3 border-t border-slate-800/60 flex items-start gap-2 text-xs text-slate-300">
-              <Activity className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
-              <div>
-                <span className="text-slate-400 text-[10px] uppercase font-mono block">Primary Hydrological Driver</span>
-                <span className="font-medium text-slate-200">{fc.primary_driver}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Civic Action Protocol */}
-          <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 text-xs">
-            <div className="flex items-center gap-2 text-cyan-400 font-bold mb-2">
-              <ShieldAlert className="h-4 w-4 shrink-0" />
-              <span>Civic Action Protocol (DPHE / Upazila)</span>
-            </div>
-            <p className="text-sm font-semibold text-slate-200 mb-1">{fc.action_title}</p>
-            <p className="text-slate-400 leading-relaxed text-xs">
-              {fc.recommended_action}
-            </p>
-          </div>
-
-          {/* Climate Stress Scenario Simulator Toggle */}
-          <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
-            <button
-              onClick={() => setShowSim(!showSim)}
-              className="w-full p-4 flex justify-between items-center text-xs font-bold text-slate-200 hover:bg-slate-800/50 transition"
-            >
-              <span className="flex items-center gap-2">
-                <Sliders className="h-4 w-4 text-cyan-400" />
-                Scenario Stress Simulator (Upstream Shock)
-              </span>
-              <span className="text-[10px] text-cyan-400 font-mono">
-                {showSim ? "Hide" : "Open Simulator"}
-              </span>
-            </button>
-
-            {showSim && (
-              <div className="p-4 pt-0 border-t border-slate-800/80 text-xs flex flex-col gap-3">
-                <p className="text-[11px] text-slate-400">
-                  Simulate upstream Gorai/Padma river discharge shock to test estuarine saltwater intrusion:
-                </p>
-
-                <div>
-                  <div className="flex justify-between text-[11px] mb-1">
-                    <span className="text-slate-300">Hardinge Flow Deficit:</span>
-                    <span className="font-mono text-cyan-400 font-bold">-{dischargeReduction}%</span>
+          {selectedStation && (
+            <>
+              {/* Station Details Header */}
+              <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-mono font-bold text-cyan-400 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-800">
+                      Station ID: {selectedStation.station_id}
+                    </span>
+                    <h2 className="text-xl font-bold mt-1.5 text-white">{selectedStation.station_name}</h2>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      {selectedStation.upazila}, {selectedStation.district} • {selectedStation.river}
+                    </p>
                   </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="80"
-                    value={dischargeReduction}
-                    onChange={(e) => setDischargeReduction(Number(e.target.value))}
-                    className="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
-                  />
+                  <div className="text-right">
+                    <span className="text-[10px] uppercase font-mono text-slate-500 block">Coast Proximity</span>
+                    <span className="text-xs font-bold text-slate-200">{selectedStation.sea_distance_km} km to Sea</span>
+                  </div>
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 flex justify-between items-center">
-                  <span className="text-[11px] text-slate-400">Simulated 30D Risk:</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
-                    getSimulatedRisk() === "High" ? "bg-rose-500 text-white" : "bg-amber-500 text-slate-950"
-                  }`}>
-                    {getSimulatedRisk()} Hazard
-                  </span>
+                {/* River Gauges */}
+                <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-800 text-xs">
+                  <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
+                    <span className="text-slate-500 text-[10px] uppercase font-mono block">Current River EC</span>
+                    <span className="text-sm font-bold text-slate-200">
+                      {selectedStation.current_ec?.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">µmho/cm</span>
+                    </span>
+                  </div>
+                  <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800/80">
+                    <span className="text-slate-500 text-[10px] uppercase font-mono block">Chloride Est.</span>
+                    <span className="text-sm font-bold text-slate-200">
+                      {selectedStation.current_chloride?.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">PPM</span>
+                    </span>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
+
+              {/* Calibrated Predictive Risk Card */}
+              {fc && (
+                <div className={`p-4 rounded-xl border transition-all ${
+                  fc.risk_level === "High"
+                    ? "bg-rose-950/20 border-rose-800/60 text-rose-200"
+                    : fc.risk_level === "Medium"
+                    ? "bg-amber-950/20 border-amber-800/60 text-amber-200"
+                    : "bg-emerald-950/20 border-emerald-800/60 text-emerald-200"
+                }`}>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block">
+                        Forecast Lead Time: {horizon} ({fc.lead_days} Days)
+                      </span>
+                      <span className="text-lg font-bold text-white mt-0.5 block">
+                        {fc.risk_level} Salinity Intrusion Risk
+                      </span>
+                    </div>
+                    <span className={`px-3 py-1 text-xs font-bold rounded-lg border ${
+                      fc.risk_level === "High" 
+                        ? "bg-rose-500 text-white border-rose-400" 
+                        : fc.risk_level === "Medium" 
+                        ? "bg-amber-500 text-slate-950 border-amber-400" 
+                        : "bg-emerald-500 text-white border-emerald-400"
+                    }`}>
+                      {fc.risk_level} Risk
+                    </span>
+                  </div>
+
+                  {/* Probability Distribution */}
+                  <div className="mt-4">
+                    <div className="flex justify-between text-[11px] text-slate-400 mb-1.5 font-mono">
+                      <span>Model Confidence</span>
+                      <span>Temperature Calibrated</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">Safe (&lt;1.5k)</span>
+                        <span className="font-bold text-emerald-400">{fc.probabilities?.low}%</span>
+                      </div>
+                      <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">Warning (1.5-3k)</span>
+                        <span className="font-bold text-amber-400">{fc.probabilities?.medium}%</span>
+                      </div>
+                      <div className="bg-slate-900/90 p-2 rounded-lg border border-slate-800">
+                        <span className="text-slate-400 text-[10px] block">Hazard (&gt;3k)</span>
+                        <span className="font-bold text-rose-400">{fc.probabilities?.high}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Primary Causal Driver */}
+                  <div className="mt-3.5 pt-3 border-t border-slate-800/60 flex items-start gap-2 text-xs text-slate-300">
+                    <Activity className="h-4 w-4 text-cyan-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-slate-400 text-[10px] uppercase font-mono block">Primary Hydrological Driver</span>
+                      <span className="font-medium text-slate-200">{fc.primary_driver}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Civic Action Protocol */}
+              {fc && (
+                <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 text-xs">
+                  <div className="flex items-center gap-2 text-cyan-400 font-bold mb-2">
+                    <ShieldAlert className="h-4 w-4 shrink-0" />
+                    <span>Civic Action Protocol (DPHE / Upazila)</span>
+                  </div>
+                  <p className="text-sm font-semibold text-slate-200 mb-1">{fc.action_title}</p>
+                  <p className="text-slate-400 leading-relaxed text-xs">
+                    {fc.recommended_action}
+                  </p>
+                </div>
+              )}
+
+              {/* Climate Stress Simulator Accordion */}
+              <div className="bg-slate-900 rounded-xl border border-slate-800 overflow-hidden">
+                <button
+                  onClick={() => setShowSim(!showSim)}
+                  className="w-full p-4 flex justify-between items-center text-xs font-bold text-slate-200 hover:bg-slate-800/50 transition"
+                >
+                  <span className="flex items-center gap-2">
+                    <Sliders className="h-4 w-4 text-cyan-400" />
+                    Scenario Stress Simulator (Upstream Shock)
+                  </span>
+                  <span className="text-[10px] text-cyan-400 font-mono">
+                    {showSim ? "Hide" : "Open Simulator"}
+                  </span>
+                </button>
+
+                {showSim && (
+                  <div className="p-4 pt-0 border-t border-slate-800/80 text-xs flex flex-col gap-3">
+                    <p className="text-[11px] text-slate-400">
+                      Simulate upstream Gorai/Padma river discharge shock to test estuarine saltwater intrusion:
+                    </p>
+
+                    <div>
+                      <div className="flex justify-between text-[11px] mb-1">
+                        <span className="text-slate-300">Hardinge Flow Deficit:</span>
+                        <span className="font-mono text-cyan-400 font-bold">-{dischargeReduction}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="80"
+                        value={dischargeReduction}
+                        onChange={(e) => setDischargeReduction(Number(e.target.value))}
+                        className="w-full accent-cyan-400 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 flex justify-between items-center">
+                      <span className="text-[11px] text-slate-400">Simulated 30D Risk:</span>
+                      <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                        getSimulatedRisk() === "High" ? "bg-rose-500 text-white" : "bg-amber-500 text-slate-950"
+                      }`}>
+                        {getSimulatedRisk()} Hazard
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
