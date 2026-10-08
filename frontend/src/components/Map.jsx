@@ -15,6 +15,20 @@ function MapRecenter({ center }) {
   return null;
 }
 
+// Invalidate Leaflet canvas size on screen orientation/resize
+function ResizeObserverHelper() {
+  const map = useMap();
+  useEffect(() => {
+    const handleResize = () => {
+      setTimeout(() => map.invalidateSize(), 200);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [map]);
+  return null;
+}
+
 const createPinIcon = (riskLevel) => {
   const color = riskLevel === "High" ? "#ef4444" : riskLevel === "Medium" ? "#f59e0b" : "#10b981";
   return L.divIcon({
@@ -34,17 +48,19 @@ export default function Map({ stations, selectedStation, onSelectStation, horizo
     : defaultCenter;
 
   return (
-    <div className="w-full h-full relative" style={{ minHeight: "500px", height: "100%" }}>
+    <div className="w-full h-full min-h-[350px] relative">
       <MapContainer 
         center={defaultCenter} 
         zoom={9} 
-        scrollWheelZoom={true}
-        style={{ height: "100%", width: "100%", minHeight: "500px" }}
+        scrollWheelZoom={false}
+        touchZoom={true}
+        style={{ height: "100%", width: "100%", minHeight: "350px" }}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <ResizeObserverHelper />
         <MapRecenter center={activeCenter} />
 
         {stations.map((st) => {
