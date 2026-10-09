@@ -1,7 +1,7 @@
 """
 AquaShield AI - Forecasting Engine Trainer & Direct Frontend Sync
-Trains 30, 60, and 90-day predictive models with leak-free temporal splitting,
-temperature calibration, baseline benchmarking, and direct auto-sync into Next.js.
+Trains multi-horizon LightGBM classifiers AND regressors to project both
+probability distributions and physical EC/Chloride values per lead-time.
 """
 import argparse
 import json
@@ -14,27 +14,35 @@ from sklearn.metrics import accuracy_score, f1_score, log_loss
 
 try:
     import lightgbm as lgb
-    def make_model():
+    def make_classifier():
         return lgb.LGBMClassifier(
             n_estimators=150, learning_rate=0.04, max_depth=5,
             min_child_samples=15, subsample=0.85, colsample_bytree=0.85,
             random_state=42, verbose=-1
         )
-    MODEL_NAME = "LightGBM Classifier"
-except ImportError:
-    from sklearn.ensemble import HistGradientBoostingClassifier
-    def make_model():
-        return HistGradientBoostingClassifier(
-            max_iter=150, learning_rate=0.04, max_depth=5, random_state=42
+    def make_regressor():
+        return lgb.LGBMRegressor(
+            n_estimators=120, learning_rate=0.04, max_depth=5,
+            random_state=42, verbose=-1
         )
+    MODEL_NAME = "LightGBM Multi-Task Engine"
+except ImportError:
+    from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostingRegressor
+    def make_classifier():
+        return HistGradientBoostingClassifier(max_iter=150, learning_rate=0.04, max_depth=5, random_state=42)
+    def make_regressor():
+        return HistGradientBoostingRegressor(max_iter=120, learning_rate=0.04, max_depth=5, random_state=42)
     MODEL_NAME = "scikit-learn HistGradientBoosting"
 
-CSV = "BWDB_Salinity_Dataset.csv"
+BASE_DIR = Path(__file__).resolve().parent
+CSV = BASE_DIR / "BWDB_Salinity_Dataset.csv"
 HORIZONS = {"30D": 28, "60D": 56, "90D": 91}
 TEST_START = pd.Timestamp("2023-01-01")
 CALIB_START = pd.Timestamp("2022-01-01")
 THRESHOLDS = (1500, 3000)
 RISK_NAMES = ["Low", "Medium", "High"]
+
+STATION_DISTANCES = {"SW1": 92, "SW135": 68, "SW242": 67}
 
 ACTIONS = {
     "Low": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally.",
@@ -48,6 +56,18 @@ FEATURES = [
     "SOIL_MOISTURE", "TIDAL_SPRING_INDEX"
 ]
 CALENDAR = ["DOY_SIN", "DOY_COS"]
+
+FEATURE_HUMAN_LABELS = {
+    "EC HIGHTIDE micromho/cm": "Estuarine Base Salinity Carryover",
+    "UPSTREAM_DISCHARGE_M3S": "Upstream Freshwater Discharge Deficit",
+    "DISCHARGE_LAG_30D": "Prolonged Gorai Baseflow Recession",
+    "TIDAL_SPRING_INDEX": "Astronomical Spring-Neap Tidal Pumping",
+    "RAINFALL_4W_SUM": "Cumulative Coastal Drought",
+    "NDWI_PROXY": "Surface Water Inundation Deficit",
+    "SOIL_MOISTURE": "Sub-surface Soil Salinization",
+    "DOY_SIN": "Dry-Season Solar Insolation Cycle",
+    "DOY_COS": "Annual Climatological Cycle"
+}
 
 def proba3(model, X):
     p = model.predict_proba(X)
@@ -76,6 +96,29 @@ def scores(y, pred):
         "macro_f1": round(float(f1_score(y, pred, average="macro", labels=[0, 1, 2], zero_division=0)), 3)
     }
 
+def compute_model_driver(model, X_single, feature_medians, predicted_class_idx):
+    baseline_p = proba3(model, X_single)[0, predicted_class_idx]
+    deltas = {}
+    for feat in FEATURES:
+        X_perturbed = X_single.copy()
+        X_perturbed[feat] = feature_medians[feat]
+        p_perturbed = proba3(model, X_perturbed)[0, predicted_class_idx]
+        deltas[feat] = baseline_p - p_perturbed
+        
+    max_delta = max(deltas.values()) if deltas else 0.0
+    if max_delta < 1e-4:
+        discharge_val = float(X_single["UPSTREAM_DISCHARGE_M3S"].iloc[0])
+        tide_val = float(X_single["TIDAL_SPRING_INDEX"].iloc[0])
+        if discharge_val < 400:
+            return "Upstream Freshwater Discharge Deficit"
+        elif tide_val > 0.7:
+            return "Astronomical Spring-Neap Tidal Pumping"
+        else:
+            return "Cumulative Coastal Drought"
+
+    top_feature = max(deltas, key=deltas.get)
+    return FEATURE_HUMAN_LABELS.get(top_feature, "Seasonal Estuarine Hydrodynamics")
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--as-of", default=None, help="Replay forecast as of date (YYYY-MM-DD)")
 args = parser.parse_args()
@@ -84,13 +127,15 @@ df = pd.read_csv(CSV)
 df["DATE_DT"] = pd.to_datetime(df["DATE"], format="%d-%b-%y")
 synthetic = bool(df["DATA_SOURCE"].astype(str).str.contains("SYNTHETIC").any()) if "DATA_SOURCE" in df else False
 
-out_dir = Path("results")
-model_dir = Path("models")
-nextjs_dir = Path("../frontend/public/data")
+out_dir = BASE_DIR / "results"
+model_dir = BASE_DIR / "models"
+nextjs_dir = BASE_DIR.parent / "frontend" / "public" / "data"
 
 out_dir.mkdir(exist_ok=True)
 model_dir.mkdir(exist_ok=True)
 nextjs_dir.mkdir(parents=True, exist_ok=True)
+
+feature_medians = df[FEATURES].median().to_dict()
 
 metrics = {
     "synthetic_demo_data": synthetic,
@@ -100,7 +145,7 @@ metrics = {
     "horizons": {}
 }
 
-test_frames, importances, final_bundles = [], [], {}
+final_bundles = {}
 
 print("\n" + "="*80)
 print("AQUASHIELD AI - MULTI-HORIZON VALIDATION (TEMPORAL EVALUATION)")
@@ -108,7 +153,8 @@ print("="*80)
 
 for name, days in HORIZONS.items():
     target = f"TARGET_RISK_{name}"
-    d = df.dropna(subset=[target]).copy()
+    target_ec = f"TARGET_EC_{name}"
+    d = df.dropna(subset=[target, target_ec]).copy()
     d[target] = d[target].astype(int)
     
     gap_end = d["DATE_DT"] + pd.Timedelta(days=days)
@@ -123,11 +169,13 @@ for name, days in HORIZONS.items():
 
     T = 1.0
     if len(fit_part) >= 100 and len(calib_part) >= 30:
-        m0 = make_model().fit(fit_part[FEATURES], fit_part[target])
+        m0 = make_classifier().fit(fit_part[FEATURES], fit_part[target])
         T = find_temperature(proba3(m0, calib_part[FEATURES]), calib_part[target].values)
 
-    model = make_model().fit(train[FEATURES], train[target])
-    p_raw = proba3(model, test[FEATURES])
+    clf_model = make_classifier().fit(train[FEATURES], train[target])
+    reg_model = make_regressor().fit(train[FEATURES], train[target_ec])
+
+    p_raw = proba3(clf_model, test[FEATURES])
     p_cal = apply_temperature(p_raw, T)
     pred = p_cal.argmax(axis=1)
     y = test[target].values
@@ -137,7 +185,7 @@ for name, days in HORIZONS.items():
         bins=[-np.inf, THRESHOLDS[0] - 1e-9, THRESHOLDS[1], np.inf],
         labels=[0, 1, 2]
     ).astype(int).values
-    cal_model = make_model().fit(train[CALENDAR], train[target])
+    cal_model = make_classifier().fit(train[CALENDAR], train[target])
     cal_pred = proba3(cal_model, test[CALENDAR]).argmax(axis=1)
 
     m = {
@@ -145,51 +193,33 @@ for name, days in HORIZONS.items():
         "model": scores(y, pred),
         "baseline_persistence": scores(y, persist),
         "baseline_calendar_climatology": scores(y, cal_pred),
-        "log_loss_raw": round(float(log_loss(y, apply_temperature(p_raw, 1.0), labels=[0, 1, 2])), 3),
-        "log_loss_calibrated": round(float(log_loss(y, p_cal, labels=[0, 1, 2])), 3)
     }
     metrics["horizons"][name] = m
     
     print(f"[{name} Horizon | T+{days}d]")
-    print(f"  AquaShield AI Acc: {m['model']['accuracy']} | Macro-F1: {m['model']['macro_f1']}")
-    print(f"  Persistence   Acc: {m['baseline_persistence']['accuracy']} | Macro-F1: {m['baseline_persistence']['macro_f1']}")
-    print(f"  Calendar Climatology: {m['baseline_calendar_climatology']['accuracy']} | Macro-F1: {m['baseline_calendar_climatology']['macro_f1']}")
-    print(f"  Probability Calibration: Temp={T:.2f}\n")
+    print(f"  AquaShield Acc: {m['model']['accuracy']} | Macro-F1: {m['model']['macro_f1']}")
+    print(f"  Persistence  Acc: {m['baseline_persistence']['accuracy']} | Macro-F1: {m['baseline_persistence']['macro_f1']}")
+    print(f"  Calibrated Temp: {T:.2f}\n")
 
-    t = test[["STATION ID", "STATION", "DATE_DT", "EC HIGHTIDE micromho/cm"]].copy()
-    t.columns = ["station_id", "station_name", "date", "ec_now_uscm"]
-    t["horizon"] = name
-    t["actual_risk"] = [RISK_NAMES[i] for i in y]
-    t["predicted_risk"] = [RISK_NAMES[i] for i in pred]
-    t[["p_low", "p_medium", "p_high"]] = display_probs(p_cal).round(3)
-    test_frames.append(t)
-
-    fi = getattr(model, "feature_importances_", None)
-    if fi is not None:
-        importances.append(pd.DataFrame({"horizon": name, "feature": FEATURES, "importance": fi}))
-
-    final_model = make_model().fit(d[FEATURES], d[target])
+    final_clf = make_classifier().fit(d[FEATURES], d[target])
+    final_reg = make_regressor().fit(d[FEATURES], d[target_ec])
     final_bundles[name] = {
-        "model": final_model, "features": FEATURES, "temperature": T,
+        "clf": final_clf, "reg": final_reg, "features": FEATURES, "temperature": T,
         "thresholds": THRESHOLDS, "horizon_days": days, "synthetic_demo_data": synthetic
     }
     joblib.dump(final_bundles[name], model_dir / f"aquashield_model_{name}.pkl")
 
-(out_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
-pd.concat(test_frames).assign(date=lambda x: x["date"].dt.strftime("%Y-%m-%d")).to_csv(out_dir / "test_predictions.csv", index=False)
-if importances:
-    pd.concat(importances).sort_values(["horizon", "importance"], ascending=[True, False]).to_csv(
-        out_dir / "feature_importance.csv", index=False
-    )
-
 src = df if args.as_of is None else df[df["DATE_DT"] <= pd.Timestamp(args.as_of)]
 latest = src.sort_values("DATE_DT").groupby("STATION ID").tail(1)
 stations_output = []
+stress_simulation_matrix = {}
 
 for _, row in latest.iterrows():
-    sea_dist = 68 if row["STATION ID"] == "SW1" else (28 if row["STATION ID"] == "SW135" else 22)
+    st_id = row["STATION ID"]
+    sea_dist = STATION_DISTANCES.get(st_id, 70)
+    
     entry = {
-        "station_id": row["STATION ID"],
+        "station_id": st_id,
         "station_name": row["STATION"],
         "district": row["DISTRICT"],
         "upazila": row["UPAZILA"],
@@ -201,24 +231,24 @@ for _, row in latest.iterrows():
         "current_chloride": int(row["CHLORIDE HIGHTIDE PPM"]),
         "forecast": {}
     }
+    
     X = row[FEATURES].to_frame().T.astype(float)
     for name, b in final_bundles.items():
-        p = display_probs(apply_temperature(proba3(b["model"], X), b["temperature"]))[0]
-        level = RISK_NAMES[int(p.argmax())]
-        
-        if row["UPSTREAM_DISCHARGE_M3S"] < 400:
-            driver = "Upstream River Discharge Deficit (<400 m³/s)"
-        elif row["TIDAL_SPRING_INDEX"] > 0.7:
-            driver = "Astronomical Spring Tide Penetration"
-        elif row["RAINFALL_4W_SUM"] < 5.0:
-            driver = "Prolonged Cumulative Drought (0 mm rainfall)"
-        else:
-            driver = "Seasonal Estuarine Hydrodynamics"
+        p = display_probs(apply_temperature(proba3(b["clf"], X), b["temperature"]))[0]
+        class_idx = int(p.argmax())
+        level = RISK_NAMES[class_idx]
+        driver = compute_model_driver(b["clf"], X, feature_medians, class_idx)
+
+        # Regress the projected future EC and chloride for this lead time
+        pred_ec = int(round(float(b["reg"].predict(X)[0])))
+        pred_cl = int(round(pred_ec * 0.556))
 
         entry["forecast"][name.lower()] = {
             "lead_days": b["horizon_days"],
             "risk_level": level,
-            "risk_code": int(p.argmax()),
+            "risk_code": class_idx,
+            "projected_ec": max(250, pred_ec),
+            "projected_chloride": max(140, pred_cl),
             "probabilities": {
                 "low": int(round(float(p[0]) * 100)),
                 "medium": int(round(float(p[1]) * 100)),
@@ -230,12 +260,33 @@ for _, row in latest.iterrows():
         }
     stations_output.append(entry)
 
-forecast_payload = json.dumps({"synthetic_demo_data": synthetic, "stations": stations_output}, indent=2)
+    b30 = final_bundles["30D"]
+    stress_simulation_matrix[st_id] = {}
+    for deficit_pct in [0, 20, 40, 60, 80]:
+        X_sim = X.copy()
+        factor = (100 - deficit_pct) / 100.0
+        X_sim["UPSTREAM_DISCHARGE_M3S"] *= factor
+        X_sim["DISCHARGE_LAG_30D"] *= factor
+        
+        p_sim = display_probs(apply_temperature(proba3(b30["clf"], X_sim), b30["temperature"]))[0]
+        sim_level = RISK_NAMES[int(p_sim.argmax())]
+        sim_ec = int(round(float(b30["reg"].predict(X_sim)[0])))
+        
+        stress_simulation_matrix[st_id][str(deficit_pct)] = {
+            "risk_level": sim_level,
+            "simulated_ec": max(250, sim_ec),
+            "prob_high": int(round(float(p_sim[2]) * 100))
+        }
 
-# Write to both Python results folder and Next.js public folder
+forecast_payload = json.dumps({"synthetic_demo_data": synthetic, "stations": stations_output}, indent=2)
+metrics_payload = json.dumps(metrics, indent=2)
+stress_payload = json.dumps(stress_simulation_matrix, indent=2)
+
 (out_dir / "latest_forecast.json").write_text(forecast_payload)
 (nextjs_dir / "latest_forecast.json").write_text(forecast_payload)
+(out_dir / "metrics.json").write_text(metrics_payload)
+(nextjs_dir / "metrics.json").write_text(metrics_payload)
+(out_dir / "stress_simulation.json").write_text(stress_payload)
+(nextjs_dir / "stress_simulation.json").write_text(stress_payload)
 
-print(f"\n[AUTO-SYNC COMPLETED]")
-print(f"[*] Updated results/latest_forecast.json")
-print(f"[*] Synchronized directly into frontend/public/data/latest_forecast.json")
+print("[*] Synchronized latest_forecast.json, metrics.json, and stress_simulation.json directly into frontend/public/data/")

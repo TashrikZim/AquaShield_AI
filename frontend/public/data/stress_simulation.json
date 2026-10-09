@@ -1,0 +1,83 @@
+{
+  "SW135": {
+    "0": {
+      "risk_level": "High",
+      "simulated_ec": 3297,
+      "prob_high": 82
+    },
+    "20": {
+      "risk_level": "High",
+      "simulated_ec": 3233,
+      "prob_high": 83
+    },
+    "40": {
+      "risk_level": "High",
+      "simulated_ec": 2963,
+      "prob_high": 82
+    },
+    "60": {
+      "risk_level": "High",
+      "simulated_ec": 2994,
+      "prob_high": 75
+    },
+    "80": {
+      "risk_level": "High",
+      "simulated_ec": 3169,
+      "prob_high": 80
+    }
+  },
+  "SW1": {
+    "0": {
+      "risk_level": "Low",
+      "simulated_ec": 1389,
+      "prob_high": 2
+    },
+    "20": {
+      "risk_level": "Low",
+      "simulated_ec": 1389,
+      "prob_high": 2
+    },
+    "40": {
+      "risk_level": "Low",
+      "simulated_ec": 2125,
+      "prob_high": 2
+    },
+    "60": {
+      "risk_level": "Low",
+      "simulated_ec": 2507,
+      "prob_high": 3
+    },
+    "80": {
+      "risk_level": "Low",
+      "simulated_ec": 2666,
+      "prob_high": 3
+    }
+  },
+  "SW242": {
+    "0": {
+      "risk_level": "High",
+      "simulated_ec": 3325,
+      "prob_high": 80
+    },
+    "20": {
+      "risk_level": "High",
+      "simulated_ec": 3328,
+      "prob_high": 73
+    },
+    "40": {
+      "risk_level": "High",
+      "simulated_ec": 2839,
+      "prob_high": 76
+    },
+    "60": {
+      "risk_level": "High",
+      "simulated_ec": 2848,
+      "prob_high": 75
+    },
+    "80": {
+      "risk_level": "High",
+      "simulated_ec": 3046,
+      "prob_high": 77
+    }
+  }
+}

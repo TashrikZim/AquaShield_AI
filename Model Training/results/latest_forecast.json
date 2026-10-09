@@ -9,20 +9,22 @@
       "river": "Kholpetua River",
       "latitude": 22.33021,
       "longitude": 89.10254,
-      "sea_distance_km": 28,
-      "current_ec": 8162,
-      "current_chloride": 4618,
+      "sea_distance_km": 68,
+      "current_ec": 2058,
+      "current_chloride": 1144,
       "forecast": {
         "30d": {
           "lead_days": 28,
           "risk_level": "High",
           "risk_code": 2,
+          "projected_ec": 3297,
+          "projected_chloride": 1833,
           "probabilities": {
-            "low": 2,
-            "medium": 2,
-            "high": 96
+            "low": 3,
+            "medium": 16,
+            "high": 82
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "primary_driver": "Estuarine Base Salinity Carryover",
           "action_title": "High Risk Advisory",
           "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
@@ -30,12 +32,14 @@
           "lead_days": 56,
           "risk_level": "High",
           "risk_code": 2,
+          "projected_ec": 4585,
+          "projected_chloride": 2549,
           "probabilities": {
             "low": 1,
-            "medium": 1,
-            "high": 97
+            "medium": 4,
+            "high": 94
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "primary_driver": "Annual Climatological Cycle",
           "action_title": "High Risk Advisory",
           "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
@@ -43,12 +47,14 @@
           "lead_days": 91,
           "risk_level": "High",
           "risk_code": 2,
+          "projected_ec": 5647,
+          "projected_chloride": 3140,
           "probabilities": {
-            "low": 2,
+            "low": 1,
             "medium": 2,
             "high": 96
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "primary_driver": "Annual Climatological Cycle",
           "action_title": "High Risk Advisory",
           "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         }
@@ -62,48 +68,54 @@
       "river": "Alaipur Khal Daratona",
       "latitude": 22.64626,
       "longitude": 89.80163,
-      "sea_distance_km": 68,
-      "current_ec": 6371,
-      "current_chloride": 3539,
+      "sea_distance_km": 92,
+      "current_ec": 660,
+      "current_chloride": 366,
       "forecast": {
         "30d": {
           "lead_days": 28,
-          "risk_level": "High",
-          "risk_code": 2,
+          "risk_level": "Low",
+          "risk_code": 0,
+          "projected_ec": 1389,
+          "projected_chloride": 772,
           "probabilities": {
-            "low": 2,
-            "medium": 2,
-            "high": 96
+            "low": 84,
+            "medium": 14,
+            "high": 2
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
-          "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "primary_driver": "Dry-Season Solar Insolation Cycle",
+          "action_title": "Low Risk Advisory",
+          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
         },
         "60d": {
           "lead_days": 56,
-          "risk_level": "High",
-          "risk_code": 2,
+          "risk_level": "Medium",
+          "risk_code": 1,
+          "projected_ec": 1875,
+          "projected_chloride": 1042,
           "probabilities": {
-            "low": 1,
-            "medium": 1,
-            "high": 97
+            "low": 3,
+            "medium": 93,
+            "high": 4
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
-          "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "primary_driver": "Annual Climatological Cycle",
+          "action_title": "Medium Risk Advisory",
+          "recommended_action": "Precautionary Advisory: Advise Union water committees to conserve stored rainwater and service PSFs."
         },
         "90d": {
           "lead_days": 91,
-          "risk_level": "High",
-          "risk_code": 2,
+          "risk_level": "Medium",
+          "risk_code": 1,
+          "projected_ec": 2748,
+          "projected_chloride": 1528,
           "probabilities": {
             "low": 2,
-            "medium": 2,
-            "high": 96
+            "medium": 75,
+            "high": 23
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
-          "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "primary_driver": "Annual Climatological Cycle",
+          "action_title": "Medium Risk Advisory",
+          "recommended_action": "Precautionary Advisory: Advise Union water committees to conserve stored rainwater and service PSFs."
         }
       }
     },
@@ -115,20 +127,22 @@
       "river": "Kobadak River",
       "latitude": 22.34185,
       "longitude": 89.30042,
-      "sea_distance_km": 22,
-      "current_ec": 8116,
-      "current_chloride": 4568,
+      "sea_distance_km": 67,
+      "current_ec": 1760,
+      "current_chloride": 978,
       "forecast": {
         "30d": {
           "lead_days": 28,
           "risk_level": "High",
           "risk_code": 2,
+          "projected_ec": 3325,
+          "projected_chloride": 1849,
           "probabilities": {
-            "low": 2,
-            "medium": 2,
-            "high": 96
+            "low": 3,
+            "medium": 17,
+            "high": 80
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "primary_driver": "Estuarine Base Salinity Carryover",
           "action_title": "High Risk Advisory",
           "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
@@ -136,12 +150,14 @@
           "lead_days": 56,
           "risk_level": "High",
           "risk_code": 2,
+          "projected_ec": 4354,
+          "projected_chloride": 2421,
           "probabilities": {
             "low": 1,
-            "medium": 1,
-            "high": 97
+            "medium": 7,
+            "high": 92
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "primary_driver": "Annual Climatological Cycle",
           "action_title": "High Risk Advisory",
           "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         },
@@ -149,12 +165,14 @@
           "lead_days": 91,
           "risk_level": "High",
           "risk_code": 2,
+          "projected_ec": 5430,
+          "projected_chloride": 3019,
           "probabilities": {
-            "low": 2,
-            "medium": 2,
-            "high": 96
+            "low": 1,
+            "medium": 4,
+            "high": 95
           },
-          "primary_driver": "Prolonged Cumulative Drought (0 mm rainfall)",
+          "primary_driver": "Annual Climatological Cycle",
           "action_title": "High Risk Advisory",
           "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
         }
