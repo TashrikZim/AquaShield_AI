@@ -1,11 +1,35 @@
 /**
  * AquaShield AI - Coastal Hydrology & Biophysical Logic Engine
- * Pure domain logic: Demographics, seawater stoichiometry, 
- * agronomic thresholds, and Sphere humanitarian logistics.
+ * Objective biophysical thresholds, demographic registry, and emergency logistics.
  */
 
-// Official BBS Census 2022 Upazila Populations & Documented Planning Assumptions
-export const UPAZILA_REGISTRY = {
+export type RiskLevel = "Low" | "Medium" | "High";
+export type ForecastHorizon = "30D" | "60D" | "90D";
+
+export interface UpazilaData {
+  name: string;
+  population_2022: number;
+  planning_stress_pct: number;
+  coastal_distance_km: number;
+}
+
+export interface BiophysicsResult {
+  sodiumEstimateMgL: number;
+  soilSalinityDsM: string;
+  whoTasteMultiple: number;
+  psfStatus: string;
+  psfAction: string;
+}
+
+export interface RiskColorTokens {
+  badge: string;
+  container: string;
+  indicator: string;
+  text: string;
+}
+
+// BBS Census 2022 Upazila Populations & Documented Scenario Stress Shares
+export const UPAZILA_REGISTRY: Record<string, UpazilaData> = {
   SW1: { 
     name: "Bagerhat Sadar", 
     population_2022: 288673, 
@@ -28,22 +52,23 @@ export const UPAZILA_REGISTRY = {
 
 /**
  * Calculates biophysical health and agronomic indicators.
- * @param {number} ec - Electrical Conductivity (µmho/cm)
- * @param {number} chloride - Chloride concentration (ppm)
+ * @param ec - Electrical Conductivity (µmho/cm)
+ * @param chloride - Chloride concentration (ppm)
  */
-export function calculateBiophysics(ec, chloride) {
-  // Dittmar Oceanographic Principle: Marine stoichiometric mass ratio Na/Cl ~ 0.556
+export function calculateBiophysics(ec: number, chloride: number): BiophysicsResult {
+  // Marine stoichiometric mass ratio: Na/Cl ~ 0.556
   const sodiumEstimateMgL = Math.round(chloride * 0.556);
   
-  // Standard agronomic conversion: 1 dS/m = 1000 µmho/cm
+  // Agronomic conversion: 1 dS/m = 1000 µmho/cm
   const soilSalinityDsM = (ec / 1000).toFixed(2);
   
   // WHO Guidelines for Drinking-water Quality: Aesthetic taste threshold = 200 mg/L
-  const whoTasteMultiple = Math.max(1, Math.round(sodiumEstimateMgL / 200));
+  // Returns raw ratio rounded to one decimal place without artificial flooring
+  const whoTasteMultiple = Math.round((sodiumEstimateMgL / 200) * 10) / 10;
 
-  // Slow Sand Filter (PSF) dissolved ion passage threshold
+  // Pond Sand Filter (PSF) intake threshold: river EC > 1,500 indicates salinity barrier breach
   const psfStatus = ec > 1500 ? "Saline Bypass Required" : "Normal Sand Filtration";
-  const psfAction = ec > 1500 ? "Membrane Required" : "Sand Filtration OK";
+  const psfAction = ec > 1500 ? "Membrane Treatment Required" : "Sand Filtration Operational";
 
   return {
     sodiumEstimateMgL,
@@ -56,26 +81,20 @@ export function calculateBiophysics(ec, chloride) {
 
 /**
  * Calculates emergency logistics based on Sphere Humanitarian Standards.
- * Emergency quota: 15 L/person/day; Mobile RO standard unit capacity: 10,000 L/day.
- * @param {number} vulnerablePop - Target population facing water stress
- * @param {string} riskLevel - Forecast risk ("Low", "Medium", "High")
+ * Parameters: 15 L/person/day emergency quota; Mobile RO unit capacity: 10,000 L/day.
+ * Assumes a baseline 5% acute hotspot population requiring first-line mobile supply.
  */
-export function calculateLogistics(vulnerablePop, riskLevel) {
+export function calculateLogistics(vulnerablePop: number, riskLevel?: RiskLevel): number {
   if (riskLevel === "High") {
-    // 5% acute hotspot population coverage
-    return Math.max(4, Math.round((vulnerablePop * 0.05 * 15) / 10000));
+    return Math.max(1, Math.round((vulnerablePop * 0.05 * 15) / 10000));
   }
   if (riskLevel === "Medium") {
-    return 2; // Precautionary rapid-response deployment
+    return 1;
   }
-  return 0; // Standby
+  return 0;
 }
 
-/**
- * Maps risk levels to consistent UI color tokens.
- * @param {string} level - Risk level name
- */
-export function getRiskColorTokens(level) {
+export function getRiskColorTokens(level?: RiskLevel): RiskColorTokens {
   switch (level) {
     case "High":
       return {

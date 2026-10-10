@@ -1,7 +1,7 @@
 """
 AquaShield AI - Forecasting Engine Trainer & Direct Frontend Sync
-Trains multi-horizon LightGBM classifiers AND regressors to project both
-probability distributions and physical EC/Chloride values per lead-time.
+Implements Monotonically Constrained Ordinal Classification,
+Climatology-Benchmarked Regression, and Temperature Scaling Probability Calibration.
 """
 import argparse
 import json
@@ -10,29 +10,39 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, f1_score, log_loss
+from sklearn.metrics import accuracy_score, f1_score, log_loss, mean_absolute_error
 
 try:
     import lightgbm as lgb
-    def make_classifier():
+    # Monotonic constraints: [DOY_SIN:0, DOY_COS:0, EC:+1, DISCHARGE:-1, DISCHARGE_LAG:-1, others:0]
+    MONOTONE = [0, 0, 1, -1, -1, 0, 0, 0, 0, 0]
+    
+    def make_binary_classifier():
         return lgb.LGBMClassifier(
-            n_estimators=150, learning_rate=0.04, max_depth=5,
+            n_estimators=120, learning_rate=0.04, max_depth=4,
             min_child_samples=15, subsample=0.85, colsample_bytree=0.85,
-            random_state=42, verbose=-1
+            monotone_constraints=MONOTONE, random_state=42, verbose=-1
         )
     def make_regressor():
         return lgb.LGBMRegressor(
-            n_estimators=120, learning_rate=0.04, max_depth=5,
-            random_state=42, verbose=-1
+            n_estimators=120, learning_rate=0.04, max_depth=4,
+            monotone_constraints=MONOTONE, random_state=42, verbose=-1
         )
-    MODEL_NAME = "LightGBM Multi-Task Engine"
+    MODEL_NAME = "LightGBM Monotonic Ordinal System"
 except ImportError:
     from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostingRegressor
-    def make_classifier():
-        return HistGradientBoostingClassifier(max_iter=150, learning_rate=0.04, max_depth=5, random_state=42)
+    MONOTONE = [0, 0, 1, -1, -1, 0, 0, 0, 0, 0]
+    def make_binary_classifier():
+        return HistGradientBoostingClassifier(
+            max_iter=120, learning_rate=0.04, max_depth=4,
+            monotonic_cst=MONOTONE, random_state=42
+        )
     def make_regressor():
-        return HistGradientBoostingRegressor(max_iter=120, learning_rate=0.04, max_depth=5, random_state=42)
-    MODEL_NAME = "scikit-learn HistGradientBoosting"
+        return HistGradientBoostingRegressor(
+            max_iter=120, learning_rate=0.04, max_depth=4,
+            monotonic_cst=MONOTONE, random_state=42
+        )
+    MODEL_NAME = "scikit-learn Monotonic Ordinal System"
 
 BASE_DIR = Path(__file__).resolve().parent
 CSV = BASE_DIR / "BWDB_Salinity_Dataset.csv"
@@ -45,9 +55,9 @@ RISK_NAMES = ["Low", "Medium", "High"]
 STATION_DISTANCES = {"SW1": 92, "SW135": 68, "SW242": 67}
 
 ACTIONS = {
-    "Low": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally.",
-    "Medium": "Precautionary Advisory: Advise Union water committees to conserve stored rainwater and service PSFs.",
-    "High": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+    "Low": "Routine monitoring. Surface reserves and community intakes operating normally.",
+    "Medium": "Precautionary Advisory: Advise Union water committees to monitor salinity and conserve freshwater reserves.",
+    "High": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
 }
 
 FEATURES = [
@@ -57,67 +67,50 @@ FEATURES = [
 ]
 CALENDAR = ["DOY_SIN", "DOY_COS"]
 
+# Objective, neutral feature attribution descriptors
 FEATURE_HUMAN_LABELS = {
-    "EC HIGHTIDE micromho/cm": "Estuarine Base Salinity Carryover",
-    "UPSTREAM_DISCHARGE_M3S": "Upstream Freshwater Discharge Deficit",
-    "DISCHARGE_LAG_30D": "Prolonged Gorai Baseflow Recession",
-    "TIDAL_SPRING_INDEX": "Astronomical Spring-Neap Tidal Pumping",
-    "RAINFALL_4W_SUM": "Cumulative Coastal Drought",
-    "NDWI_PROXY": "Surface Water Inundation Deficit",
-    "SOIL_MOISTURE": "Sub-surface Soil Salinization",
-    "DOY_SIN": "Dry-Season Solar Insolation Cycle",
-    "DOY_COS": "Annual Climatological Cycle"
+    "EC HIGHTIDE micromho/cm": "Baseline River Salinity Level",
+    "UPSTREAM_DISCHARGE_M3S": "Upstream Freshwater Discharge Level",
+    "DISCHARGE_LAG_30D": "Antecedent 30-Day Discharge Deficit",
+    "TIDAL_SPRING_INDEX": "Spring-Neap Lunar Phase",
+    "RAINFALL_4W_SUM": "Cumulative Coastal Precipitation",
+    "NDWI_PROXY": "Surface Water Extent Proxy",
+    "SOIL_MOISTURE": "Antecedent Soil Wetness",
+    "DOY_SIN": "Annual Seasonal Phase",
+    "DOY_COS": "Annual Meteorological Timing"
 }
 
-def proba3(model, X):
-    p = model.predict_proba(X)
-    out = np.zeros((len(X), 3))
-    for i, c in enumerate(model.classes_):
-        out[:, int(c)] = p[:, i]
-    return out
+def apply_temperature_binary(p, T):
+    # Logit temperature scaling: p_cal = sigmoid(logit(p) / T)
+    p_clipped = np.clip(p, 1e-6, 1.0 - 1e-6)
+    logit = np.log(p_clipped / (1.0 - p_clipped))
+    return 1.0 / (1.0 + np.exp(-logit / T))
 
-def apply_temperature(p, T):
-    q = np.clip(p, 1e-6, 1.0) ** (1.0 / T)
-    return q / q.sum(axis=1, keepdims=True)
-
-def display_probs(p, eps=0.03):
-    return (1.0 - eps) * p + (eps / 3.0)
-
-def find_temperature(p, y):
+def find_temperature_binary(p, y):
     if len(y) < 30 or len(np.unique(y)) < 2:
         return 1.0
-    grid = np.arange(0.5, 5.01, 0.1)
-    losses = [log_loss(y, apply_temperature(p, T), labels=[0, 1, 2]) for T in grid]
+    grid = np.arange(0.5, 4.01, 0.05)
+    losses = [log_loss(y, apply_temperature_binary(p, T)) for T in grid]
     return float(grid[int(np.argmin(losses))])
 
-def scores(y, pred):
+def predict_ordinal_probs(m1, m2, T1, T2, X):
+    p1 = apply_temperature_binary(m1.predict_proba(X)[:, 1], T1)
+    p2 = apply_temperature_binary(m2.predict_proba(X)[:, 1], T2)
+    # P(EC >= 3000) cannot exceed P(EC >= 1500)
+    p2 = np.minimum(p1, p2)
+    
+    p_low = 1.0 - p1
+    p_med = p1 - p2
+    p_high = p2
+    
+    P = np.column_stack([p_low, p_med, p_high])
+    return P / P.sum(axis=1, keepdims=True)
+
+def scores_multiclass(y, pred):
     return {
         "accuracy": round(float(accuracy_score(y, pred)), 3),
         "macro_f1": round(float(f1_score(y, pred, average="macro", labels=[0, 1, 2], zero_division=0)), 3)
     }
-
-def compute_model_driver(model, X_single, feature_medians, predicted_class_idx):
-    baseline_p = proba3(model, X_single)[0, predicted_class_idx]
-    deltas = {}
-    for feat in FEATURES:
-        X_perturbed = X_single.copy()
-        X_perturbed[feat] = feature_medians[feat]
-        p_perturbed = proba3(model, X_perturbed)[0, predicted_class_idx]
-        deltas[feat] = baseline_p - p_perturbed
-        
-    max_delta = max(deltas.values()) if deltas else 0.0
-    if max_delta < 1e-4:
-        discharge_val = float(X_single["UPSTREAM_DISCHARGE_M3S"].iloc[0])
-        tide_val = float(X_single["TIDAL_SPRING_INDEX"].iloc[0])
-        if discharge_val < 400:
-            return "Upstream Freshwater Discharge Deficit"
-        elif tide_val > 0.7:
-            return "Astronomical Spring-Neap Tidal Pumping"
-        else:
-            return "Cumulative Coastal Drought"
-
-    top_feature = max(deltas, key=deltas.get)
-    return FEATURE_HUMAN_LABELS.get(top_feature, "Seasonal Estuarine Hydrodynamics")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--as-of", default=None, help="Replay forecast as of date (YYYY-MM-DD)")
@@ -125,7 +118,7 @@ args = parser.parse_args()
 
 df = pd.read_csv(CSV)
 df["DATE_DT"] = pd.to_datetime(df["DATE"], format="%d-%b-%y")
-synthetic = bool(df["DATA_SOURCE"].astype(str).str.contains("SYNTHETIC").any()) if "DATA_SOURCE" in df else False
+synthetic = True
 
 out_dir = BASE_DIR / "results"
 model_dir = BASE_DIR / "models"
@@ -138,7 +131,7 @@ nextjs_dir.mkdir(parents=True, exist_ok=True)
 feature_medians = df[FEATURES].median().to_dict()
 
 metrics = {
-    "synthetic_demo_data": synthetic,
+    "surrogate_demonstration_data": synthetic,
     "model_architecture": MODEL_NAME,
     "test_start_date": str(TEST_START.date()),
     "features": FEATURES,
@@ -148,8 +141,11 @@ metrics = {
 final_bundles = {}
 
 print("\n" + "="*80)
-print("AQUASHIELD AI - MULTI-HORIZON VALIDATION (TEMPORAL EVALUATION)")
+print("AQUASHIELD AI - ORDINAL TEMPORAL EVALUATION (OUT-OF-TIME 2023-2024)")
 print("="*80)
+
+# Build seasonal climatology lookup on training data (day of year median per station)
+train_climatology = df[df["DATE_DT"] < TEST_START].groupby(["STATION ID", "MONTH"])["EC HIGHTIDE micromho/cm"].median()
 
 for name, days in HORIZONS.items():
     target = f"TARGET_RISK_{name}"
@@ -163,61 +159,81 @@ for name, days in HORIZONS.items():
     
     fit_part = train[gap_end[train.index] < CALIB_START]
     calib_part = train[train["DATE_DT"] >= CALIB_START]
-    
-    if len(train) < 100 or len(test) < 20:
-        continue
 
-    T = 1.0
-    if len(fit_part) >= 100 and len(calib_part) >= 30:
-        m0 = make_classifier().fit(fit_part[FEATURES], fit_part[target])
-        T = find_temperature(proba3(m0, calib_part[FEATURES]), calib_part[target].values)
+    # Target 1: EC >= 1500; Target 2: EC >= 3000
+    y1_fit = (fit_part[target] >= 1).astype(int)
+    y2_fit = (fit_part[target] >= 2).astype(int)
+    y1_cal = (calib_part[target] >= 1).astype(int)
+    y2_cal = (calib_part[target] >= 2).astype(int)
 
-    clf_model = make_classifier().fit(train[FEATURES], train[target])
-    reg_model = make_regressor().fit(train[FEATURES], train[target_ec])
+    # Train calibration models
+    m1_cal = make_binary_classifier().fit(fit_part[FEATURES], y1_fit)
+    m2_cal = make_binary_classifier().fit(fit_part[FEATURES], y2_fit)
+    T1 = find_temperature_binary(m1_cal.predict_proba(calib_part[FEATURES])[:, 1], y1_cal.values)
+    T2 = find_temperature_binary(m2_cal.predict_proba(calib_part[FEATURES])[:, 1], y2_cal.values)
 
-    p_raw = proba3(clf_model, test[FEATURES])
-    p_cal = apply_temperature(p_raw, T)
-    pred = p_cal.argmax(axis=1)
-    y = test[target].values
+    # Train operational models on full pre-2023 training set
+    m1_train = make_binary_classifier().fit(train[FEATURES], (train[target] >= 1).astype(int))
+    m2_train = make_binary_classifier().fit(train[FEATURES], (train[target] >= 2).astype(int))
+    reg_train = make_regressor().fit(train[FEATURES], train[target_ec])
 
-    persist = pd.cut(
+    # Out-of-time inference
+    p_test = predict_ordinal_probs(m1_train, m2_train, T1, T2, test[FEATURES])
+    pred_risk = p_test.argmax(axis=1)
+    y_test = test[target].values
+    pred_ec = reg_train.predict(test[FEATURES])
+    y_test_ec = test[target_ec].values
+
+    # Baseline calculations
+    persist_pred = pd.cut(
         test["EC HIGHTIDE micromho/cm"],
         bins=[-np.inf, THRESHOLDS[0] - 1e-9, THRESHOLDS[1], np.inf],
         labels=[0, 1, 2]
     ).astype(int).values
-    cal_model = make_classifier().fit(train[CALENDAR], train[target])
-    cal_pred = proba3(cal_model, test[CALENDAR]).argmax(axis=1)
+    
+    test_months = (test["DATE_DT"] + pd.Timedelta(days=days)).dt.month
+    climatology_ec = [train_climatology.get((st, m), 1500.0) for st, m in zip(test["STATION ID"], test_months)]
+    
+    mae_model = round(float(mean_absolute_error(y_test_ec, pred_ec)), 1)
+    mae_persist = round(float(mean_absolute_error(y_test_ec, test["EC HIGHTIDE micromho/cm"])), 1)
+    mae_climatology = round(float(mean_absolute_error(y_test_ec, climatology_ec)), 1)
 
     m = {
-        "train_rows": int(len(train)), "test_rows": int(len(test)), "calibrated_temperature": round(T, 2),
-        "model": scores(y, pred),
-        "baseline_persistence": scores(y, persist),
-        "baseline_calendar_climatology": scores(y, cal_pred),
+        "train_rows": int(len(train)), "test_rows": int(len(test)),
+        "temp_scaling_T": [round(T1, 2), round(T2, 2)],
+        "model_risk": scores_multiclass(y_test, pred_risk),
+        "baseline_persistence": scores_multiclass(y_test, persist_pred),
+        "ec_regression_mae": {
+            "model_mae": mae_model,
+            "persistence_mae": mae_persist,
+            "climatology_mae": mae_climatology
+        }
     }
     metrics["horizons"][name] = m
     
     print(f"[{name} Horizon | T+{days}d]")
-    print(f"  AquaShield Acc: {m['model']['accuracy']} | Macro-F1: {m['model']['macro_f1']}")
-    print(f"  Persistence  Acc: {m['baseline_persistence']['accuracy']} | Macro-F1: {m['baseline_persistence']['macro_f1']}")
-    print(f"  Calibrated Temp: {T:.2f}\n")
+    print(f"  Risk Accuracy : {m['model_risk']['accuracy']} | Macro-F1: {m['model_risk']['macro_f1']} (Persistence: {m['baseline_persistence']['accuracy']})")
+    print(f"  EC Regression : MAE {mae_model} µS/cm vs Climatology {mae_climatology} µS/cm | Persistence {mae_persist} µS/cm\n")
 
-    final_clf = make_classifier().fit(d[FEATURES], d[target])
+    # Fit final operational models across the full dataset
+    final_m1 = make_binary_classifier().fit(d[FEATURES], (d[target] >= 1).astype(int))
+    final_m2 = make_binary_classifier().fit(d[FEATURES], (d[target] >= 2).astype(int))
     final_reg = make_regressor().fit(d[FEATURES], d[target_ec])
     final_bundles[name] = {
-        "clf": final_clf, "reg": final_reg, "features": FEATURES, "temperature": T,
-        "thresholds": THRESHOLDS, "horizon_days": days, "synthetic_demo_data": synthetic
+        "m1": final_m1, "m2": final_m2, "reg": final_reg,
+        "T1": T1, "T2": T2, "horizon_days": days
     }
-    joblib.dump(final_bundles[name], model_dir / f"aquashield_model_{name}.pkl")
+    joblib.dump(final_bundles[name], model_dir / f"aquashield_ordinal_{name}.pkl")
 
+# Generate live dashboard payload
 src = df if args.as_of is None else df[df["DATE_DT"] <= pd.Timestamp(args.as_of)]
 latest = src.sort_values("DATE_DT").groupby("STATION ID").tail(1)
+as_of_date = str(latest["DATE_DT"].max().date())
 stations_output = []
 stress_simulation_matrix = {}
 
 for _, row in latest.iterrows():
     st_id = row["STATION ID"]
-    sea_dist = STATION_DISTANCES.get(st_id, 70)
-    
     entry = {
         "station_id": st_id,
         "station_name": row["STATION"],
@@ -226,7 +242,7 @@ for _, row in latest.iterrows():
         "river": row["RIVER"],
         "latitude": float(row["LATITUDE"]),
         "longitude": float(row["LONGITUDE"]),
-        "sea_distance_km": sea_dist,
+        "sea_distance_km": STATION_DISTANCES.get(st_id, 70),
         "current_ec": int(row["EC HIGHTIDE micromho/cm"]),
         "current_chloride": int(row["CHLORIDE HIGHTIDE PPM"]),
         "forecast": {}
@@ -234,12 +250,21 @@ for _, row in latest.iterrows():
     
     X = row[FEATURES].to_frame().T.astype(float)
     for name, b in final_bundles.items():
-        p = display_probs(apply_temperature(proba3(b["clf"], X), b["temperature"]))[0]
-        class_idx = int(p.argmax())
+        p_raw = predict_ordinal_probs(b["m1"], b["m2"], b["T1"], b["T2"], X)[0]
+        class_idx = int(p_raw.argmax())
         level = RISK_NAMES[class_idx]
-        driver = compute_model_driver(b["clf"], X, feature_medians, class_idx)
 
-        # Regress the projected future EC and chloride for this lead time
+        # Simple feature perturbation attribution on high risk probability
+        base_p_high = p_raw[2]
+        deltas = {}
+        for feat in FEATURES:
+            X_p = X.copy()
+            X_p[feat] = feature_medians[feat]
+            p_p = predict_ordinal_probs(b["m1"], b["m2"], b["T1"], b["T2"], X_p)[0]
+            deltas[feat] = abs(base_p_high - p_p[2])
+        top_feature = max(deltas, key=deltas.get)
+        driver = FEATURE_HUMAN_LABELS.get(top_feature, "Seasonal Estuarine Cycle")
+
         pred_ec = int(round(float(b["reg"].predict(X)[0])))
         pred_cl = int(round(pred_ec * 0.556))
 
@@ -250,9 +275,9 @@ for _, row in latest.iterrows():
             "projected_ec": max(250, pred_ec),
             "projected_chloride": max(140, pred_cl),
             "probabilities": {
-                "low": int(round(float(p[0]) * 100)),
-                "medium": int(round(float(p[1]) * 100)),
-                "high": int(round(float(p[2]) * 100))
+                "low": int(round(float(p_raw[0]) * 100)),
+                "medium": int(round(float(p_raw[1]) * 100)),
+                "high": int(round(float(p_raw[2]) * 100))
             },
             "primary_driver": driver,
             "action_title": f"{level} Risk Advisory",
@@ -260,25 +285,30 @@ for _, row in latest.iterrows():
         }
     stations_output.append(entry)
 
+    # Physical dynamic stress test: Simulates sustained upstream reduction through Savenije response
     b30 = final_bundles["30D"]
     stress_simulation_matrix[st_id] = {}
+    base_q = float(X["UPSTREAM_DISCHARGE_M3S"].iloc[0])
+    base_ec = float(X["EC HIGHTIDE micromho/cm"].iloc[0])
+    
     for deficit_pct in [0, 20, 40, 60, 80]:
-        X_sim = X.copy()
         factor = (100 - deficit_pct) / 100.0
-        X_sim["UPSTREAM_DISCHARGE_M3S"] *= factor
-        X_sim["DISCHARGE_LAG_30D"] *= factor
-        
-        p_sim = display_probs(apply_temperature(proba3(b30["clf"], X_sim), b30["temperature"]))[0]
-        sim_level = RISK_NAMES[int(p_sim.argmax())]
-        sim_ec = int(round(float(b30["reg"].predict(X_sim)[0])))
+        # Physical estuarine steady-state equilibrium shift: EC ~ Q^(-0.45)
+        sim_ec = int(round(base_ec * (factor ** -0.45)))
+        sim_level = "High" if sim_ec >= 3000 else ("Medium" if sim_ec >= 1500 else "Low")
         
         stress_simulation_matrix[st_id][str(deficit_pct)] = {
             "risk_level": sim_level,
-            "simulated_ec": max(250, sim_ec),
-            "prob_high": int(round(float(p_sim[2]) * 100))
+            "simulated_ec": sim_ec,
+            "deficit_pct": deficit_pct
         }
 
-forecast_payload = json.dumps({"synthetic_demo_data": synthetic, "stations": stations_output}, indent=2)
+forecast_payload = json.dumps({
+    "as_of_date": as_of_date,
+    "surrogate_demonstration_data": synthetic,
+    "stations": stations_output
+}, indent=2)
+
 metrics_payload = json.dumps(metrics, indent=2)
 stress_payload = json.dumps(stress_simulation_matrix, indent=2)
 
@@ -289,4 +319,4 @@ stress_payload = json.dumps(stress_simulation_matrix, indent=2)
 (out_dir / "stress_simulation.json").write_text(stress_payload)
 (nextjs_dir / "stress_simulation.json").write_text(stress_payload)
 
-print("[*] Synchronized latest_forecast.json, metrics.json, and stress_simulation.json directly into frontend/public/data/")
+print(f"[*] Synchronized latest_forecast.json (As-of: {as_of_date}) and metrics to frontend/public/data/")

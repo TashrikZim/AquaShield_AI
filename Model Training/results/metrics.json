@@ -1,6 +1,6 @@
 {
-  "synthetic_demo_data": true,
-  "model_architecture": "LightGBM Multi-Task Engine",
+  "surrogate_demonstration_data": true,
+  "model_architecture": "LightGBM Monotonic Ordinal System",
   "test_start_date": "2023-01-01",
   "features": [
     "DOY_SIN",
@@ -18,52 +18,64 @@
     "30D": {
       "train_rows": 1227,
       "test_rows": 300,
-      "calibrated_temperature": 1.3,
-      "model": {
-        "accuracy": 0.943,
-        "macro_f1": 0.918
+      "temp_scaling_T": [
+        0.7,
+        0.5
+      ],
+      "model_risk": {
+        "accuracy": 0.94,
+        "macro_f1": 0.881
       },
       "baseline_persistence": {
         "accuracy": 0.793,
-        "macro_f1": 0.71
+        "macro_f1": 0.641
       },
-      "baseline_calendar_climatology": {
-        "accuracy": 0.83,
-        "macro_f1": 0.699
+      "ec_regression_mae": {
+        "model_mae": 349.4,
+        "persistence_mae": 1031.5,
+        "climatology_mae": 446.9
       }
     },
     "60D": {
       "train_rows": 1215,
       "test_rows": 288,
-      "calibrated_temperature": 1.1,
-      "model": {
-        "accuracy": 0.938,
-        "macro_f1": 0.904
+      "temp_scaling_T": [
+        1.0,
+        0.5
+      ],
+      "model_risk": {
+        "accuracy": 0.941,
+        "macro_f1": 0.875
       },
       "baseline_persistence": {
-        "accuracy": 0.66,
-        "macro_f1": 0.559
+        "accuracy": 0.639,
+        "macro_f1": 0.469
       },
-      "baseline_calendar_climatology": {
-        "accuracy": 0.844,
-        "macro_f1": 0.714
+      "ec_regression_mae": {
+        "model_mae": 300.3,
+        "persistence_mae": 1937.6,
+        "climatology_mae": 444.4
       }
     },
     "90D": {
       "train_rows": 1200,
       "test_rows": 273,
-      "calibrated_temperature": 1.1,
-      "model": {
-        "accuracy": 0.941,
-        "macro_f1": 0.906
+      "temp_scaling_T": [
+        1.0,
+        0.65
+      ],
+      "model_risk": {
+        "accuracy": 0.952,
+        "macro_f1": 0.9
       },
       "baseline_persistence": {
-        "accuracy": 0.476,
-        "macro_f1": 0.348
+        "accuracy": 0.487,
+        "macro_f1": 0.379
       },
-      "baseline_calendar_climatology": {
-        "accuracy": 0.846,
-        "macro_f1": 0.713
+      "ec_regression_mae": {
+        "model_mae": 215.1,
+        "persistence_mae": 2785.1,
+        "climatology_mae": 405.3
       }
     }
   }

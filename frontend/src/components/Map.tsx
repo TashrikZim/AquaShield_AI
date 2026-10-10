@@ -1,11 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import L, { LatLngTuple } from "leaflet";
 
-function MapRecenter({ center }) {
+import { Station } from "@/data/salinityData";
+import { ForecastHorizon, RiskLevel } from "@/lib/hydrology";
+
+interface MapProps {
+  stations: Station[];
+  selectedStation: Station | null;
+  onSelectStation: (st: Station) => void;
+  horizon: ForecastHorizon;
+}
+
+function MapRecenter({ center }: { center: LatLngTuple }) {
   const map = useMap();
   useEffect(() => {
     if (center) {
@@ -15,7 +25,6 @@ function MapRecenter({ center }) {
   return null;
 }
 
-// Invalidate Leaflet canvas size on screen orientation/resize
 function ResizeObserverHelper() {
   const map = useMap();
   useEffect(() => {
@@ -29,7 +38,7 @@ function ResizeObserverHelper() {
   return null;
 }
 
-const createPinIcon = (riskLevel) => {
+const createPinIcon = (riskLevel: RiskLevel) => {
   const color = riskLevel === "High" ? "#ef4444" : riskLevel === "Medium" ? "#f59e0b" : "#10b981";
   return L.divIcon({
     className: "custom-marker-pin",
@@ -41,9 +50,9 @@ const createPinIcon = (riskLevel) => {
   });
 };
 
-export default function Map({ stations, selectedStation, onSelectStation, horizon }) {
-  const defaultCenter = [22.45, 89.45];
-  const activeCenter = selectedStation 
+export default function Map({ stations, selectedStation, onSelectStation, horizon }: MapProps) {
+  const defaultCenter: LatLngTuple = [22.45, 89.45];
+  const activeCenter: LatLngTuple = selectedStation 
     ? [selectedStation.latitude, selectedStation.longitude] 
     : defaultCenter;
 
@@ -65,7 +74,7 @@ export default function Map({ stations, selectedStation, onSelectStation, horizo
 
         {stations.map((st) => {
           const fc = st.forecast[horizon.toLowerCase()];
-          const risk = fc ? fc.risk_level : "Low";
+          const risk: RiskLevel = fc ? fc.risk_level : "Low";
 
           return (
             <Marker

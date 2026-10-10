@@ -1,5 +1,6 @@
 {
-  "synthetic_demo_data": true,
+  "as_of_date": "2024-12-25",
+  "surrogate_demonstration_data": true,
   "stations": [
     {
       "station_id": "SW135",
@@ -10,53 +11,53 @@
       "latitude": 22.33021,
       "longitude": 89.10254,
       "sea_distance_km": 68,
-      "current_ec": 2058,
-      "current_chloride": 1144,
+      "current_ec": 1498,
+      "current_chloride": 839,
       "forecast": {
         "30d": {
           "lead_days": 28,
           "risk_level": "High",
           "risk_code": 2,
-          "projected_ec": 3297,
-          "projected_chloride": 1833,
+          "projected_ec": 4119,
+          "projected_chloride": 2290,
           "probabilities": {
-            "low": 3,
-            "medium": 16,
-            "high": 82
+            "low": 0,
+            "medium": 0,
+            "high": 99
           },
-          "primary_driver": "Estuarine Base Salinity Carryover",
+          "primary_driver": "Baseline River Salinity Level",
           "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "recommended_action": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
         },
         "60d": {
           "lead_days": 56,
           "risk_level": "High",
           "risk_code": 2,
-          "projected_ec": 4585,
-          "projected_chloride": 2549,
+          "projected_ec": 6490,
+          "projected_chloride": 3608,
           "probabilities": {
-            "low": 1,
-            "medium": 4,
-            "high": 94
+            "low": 0,
+            "medium": 0,
+            "high": 100
           },
-          "primary_driver": "Annual Climatological Cycle",
+          "primary_driver": "Annual Meteorological Timing",
           "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "recommended_action": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
         },
         "90d": {
           "lead_days": 91,
           "risk_level": "High",
           "risk_code": 2,
-          "projected_ec": 5647,
-          "projected_chloride": 3140,
+          "projected_ec": 8257,
+          "projected_chloride": 4591,
           "probabilities": {
             "low": 1,
-            "medium": 2,
-            "high": 96
+            "medium": 0,
+            "high": 99
           },
-          "primary_driver": "Annual Climatological Cycle",
+          "primary_driver": "Annual Meteorological Timing",
           "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "recommended_action": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
         }
       }
     },
@@ -69,53 +70,53 @@
       "latitude": 22.64626,
       "longitude": 89.80163,
       "sea_distance_km": 92,
-      "current_ec": 660,
-      "current_chloride": 366,
+      "current_ec": 505,
+      "current_chloride": 285,
       "forecast": {
         "30d": {
           "lead_days": 28,
-          "risk_level": "Low",
-          "risk_code": 0,
-          "projected_ec": 1389,
-          "projected_chloride": 772,
+          "risk_level": "Medium",
+          "risk_code": 1,
+          "projected_ec": 1805,
+          "projected_chloride": 1004,
           "probabilities": {
-            "low": 84,
-            "medium": 14,
-            "high": 2
+            "low": 14,
+            "medium": 86,
+            "high": 0
           },
-          "primary_driver": "Dry-Season Solar Insolation Cycle",
-          "action_title": "Low Risk Advisory",
-          "recommended_action": "Routine monitoring. Surface reserves and pond sand filters (PSFs) operating normally."
+          "primary_driver": "Baseline River Salinity Level",
+          "action_title": "Medium Risk Advisory",
+          "recommended_action": "Precautionary Advisory: Advise Union water committees to monitor salinity and conserve freshwater reserves."
         },
         "60d": {
           "lead_days": 56,
-          "risk_level": "Medium",
-          "risk_code": 1,
-          "projected_ec": 1875,
-          "projected_chloride": 1042,
+          "risk_level": "High",
+          "risk_code": 2,
+          "projected_ec": 3377,
+          "projected_chloride": 1878,
           "probabilities": {
-            "low": 3,
-            "medium": 93,
-            "high": 4
+            "low": 0,
+            "medium": 1,
+            "high": 99
           },
-          "primary_driver": "Annual Climatological Cycle",
-          "action_title": "Medium Risk Advisory",
-          "recommended_action": "Precautionary Advisory: Advise Union water committees to conserve stored rainwater and service PSFs."
+          "primary_driver": "Annual Meteorological Timing",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
         },
         "90d": {
           "lead_days": 91,
-          "risk_level": "Medium",
-          "risk_code": 1,
-          "projected_ec": 2748,
-          "projected_chloride": 1528,
+          "risk_level": "High",
+          "risk_code": 2,
+          "projected_ec": 4796,
+          "projected_chloride": 2667,
           "probabilities": {
-            "low": 2,
-            "medium": 75,
-            "high": 23
+            "low": 1,
+            "medium": 0,
+            "high": 99
           },
-          "primary_driver": "Annual Climatological Cycle",
-          "action_title": "Medium Risk Advisory",
-          "recommended_action": "Precautionary Advisory: Advise Union water committees to conserve stored rainwater and service PSFs."
+          "primary_driver": "Annual Meteorological Timing",
+          "action_title": "High Risk Advisory",
+          "recommended_action": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
         }
       }
     },
@@ -128,53 +129,53 @@
       "latitude": 22.34185,
       "longitude": 89.30042,
       "sea_distance_km": 67,
-      "current_ec": 1760,
-      "current_chloride": 978,
+      "current_ec": 1365,
+      "current_chloride": 756,
       "forecast": {
         "30d": {
           "lead_days": 28,
           "risk_level": "High",
           "risk_code": 2,
-          "projected_ec": 3325,
-          "projected_chloride": 1849,
+          "projected_ec": 3782,
+          "projected_chloride": 2103,
           "probabilities": {
-            "low": 3,
-            "medium": 17,
-            "high": 80
+            "low": 0,
+            "medium": 0,
+            "high": 99
           },
-          "primary_driver": "Estuarine Base Salinity Carryover",
+          "primary_driver": "Baseline River Salinity Level",
           "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "recommended_action": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
         },
         "60d": {
           "lead_days": 56,
           "risk_level": "High",
           "risk_code": 2,
-          "projected_ec": 4354,
-          "projected_chloride": 2421,
+          "projected_ec": 5688,
+          "projected_chloride": 3163,
           "probabilities": {
-            "low": 1,
-            "medium": 7,
-            "high": 92
+            "low": 0,
+            "medium": 0,
+            "high": 100
           },
-          "primary_driver": "Annual Climatological Cycle",
+          "primary_driver": "Annual Meteorological Timing",
           "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "recommended_action": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
         },
         "90d": {
           "lead_days": 91,
           "risk_level": "High",
           "risk_code": 2,
-          "projected_ec": 5430,
-          "projected_chloride": 3019,
+          "projected_ec": 8170,
+          "projected_chloride": 4543,
           "probabilities": {
             "low": 1,
-            "medium": 4,
-            "high": 95
+            "medium": 0,
+            "high": 99
           },
-          "primary_driver": "Annual Climatological Cycle",
+          "primary_driver": "Annual Meteorological Timing",
           "action_title": "High Risk Advisory",
-          "recommended_action": "CRITICAL PROTOCOL: Enforce community rainwater rationing. Alert DPHE & NGOs to stage mobile RO water treatment units."
+          "recommended_action": "CRITICAL PROTOCOL: Prepare municipal rainwater storage. Alert DPHE & local authorities to stage mobile treatment capacity."
         }
       }
     }
