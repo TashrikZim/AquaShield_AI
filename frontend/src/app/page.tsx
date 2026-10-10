@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { 
   Droplets, ShieldAlert, Activity, AlertTriangle, 
   Sliders, BarChart3, Info, HeartPulse, Sprout, 
-  Filter, Users, Gauge
+  Filter, Users, Gauge, BookOpen, Compass, Cpu
 } from "lucide-react";
 
 import { STATIONS as FALLBACK_STATIONS, Station } from "@/data/salinityData";
@@ -62,6 +62,7 @@ export default function Dashboard() {
   const [showSim, setShowSim] = useState<boolean>(false);
   const [showValidation, setShowValidation] = useState<boolean>(false);
   const [showProvenance, setShowProvenance] = useState<boolean>(false);
+  const [showGuide, setShowGuide] = useState<boolean>(false);
   const [isSynced, setIsSynced] = useState<boolean>(false);
   const [metricsData, setMetricsData] = useState<MetricsPayload | null>(null);
   const [stressMatrix, setStressMatrix] = useState<Record<string, Record<string, StressSimStep>> | null>(null);
@@ -129,7 +130,7 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Header */}
+      {/* Primary Header */}
       <header className="shrink-0 border-b border-slate-800 bg-slate-900/95 px-4 sm:px-6 py-2.5 z-20">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 max-w-7xl mx-auto lg:max-w-none">
           <div className="flex items-center gap-3">
@@ -150,7 +151,18 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
+          <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 flex-wrap">
+            {/* Clean Static Metric & Domain Guide Button */}
+            <button
+              onClick={() => setShowGuide(true)}
+              className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg border border-cyan-800 bg-cyan-950/40 text-cyan-300 hover:text-white hover:bg-cyan-900/60 transition shadow-sm"
+              title="Open domain guide and metric definitions"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-cyan-400" />
+              <span>Metric & Domain Guide</span>
+            </button>
+
+            {/* Validation Benchmarks Button */}
             <button
               onClick={() => setShowValidation(true)}
               className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition"
@@ -159,6 +171,7 @@ export default function Dashboard() {
               <span>Validation Benchmarks</span>
             </button>
 
+            {/* Horizon Selector */}
             <div className="flex items-center bg-slate-800/90 rounded-lg p-1 border border-slate-700">
               {(["30D", "60D", "90D"] as ForecastHorizon[]).map((h) => (
                 <button
@@ -233,6 +246,7 @@ export default function Dashboard() {
 
       {/* Main Operational Canvas */}
       <div className="flex flex-col lg:flex-row flex-1 min-h-0 relative">
+        {/* Map View */}
         <div className="w-full lg:w-[58%] xl:w-[62%] h-[370px] sm:h-[450px] lg:h-full relative shrink-0 lg:shrink">
           <MapComponent
             stations={stations}
@@ -250,7 +264,9 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Intelligence Sidebar */}
         <div className="w-full lg:w-[42%] xl:w-[38%] h-auto lg:h-full overflow-y-auto p-4 sm:p-5 bg-slate-900/80 border-t lg:border-t-0 lg:border-l border-slate-800 flex flex-col gap-3.5">
+          {/* Mobile Station Quick Toggle */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:hidden">
             <span className="text-[10px] uppercase font-mono text-slate-500 shrink-0">Station:</span>
             {stations.map((st) => (
@@ -411,7 +427,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Civic Protocol */}
+              {/* Civic Action Protocol Card */}
               {fc && (
                 <div className="p-3.5 bg-slate-900 rounded-xl border border-slate-800 text-xs">
                   <div className="flex items-center gap-2 text-cyan-400 font-bold mb-1.5">
@@ -487,6 +503,200 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Clean Metric & Domain Guide Modal (Zero Unescaped JSX Blocks) */}
+      {showGuide && (
+        <div className="fixed inset-0 z-[1000] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full p-5 sm:p-7 shadow-2xl my-auto max-h-[92vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-slate-800 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-cyan-950/60 border border-cyan-800 text-cyan-300">
+                  <BookOpen className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-white">AquaShield AI - Comprehensive Domain & Metric Guide</h3>
+                    <span className="bg-cyan-950 border border-cyan-800 text-cyan-300 text-[10px] font-mono px-2 py-0.5 rounded-full font-semibold">
+                      v2.4
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-0.5">Physical hydrology, chemical stoichiometry, agronomic guidelines, logistics math, and ML benchmarks</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowGuide(false)} 
+                className="text-slate-400 hover:text-white text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 hover:bg-slate-700 transition"
+              >
+                Close ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="overflow-y-auto pr-2 mt-4 space-y-4 text-xs text-slate-300">
+              
+              {/* Section 1: Estuarine Hydrodynamics & Salinity Metrics */}
+              <section className="bg-slate-950/90 p-4 rounded-xl border border-slate-800">
+                <h4 className="font-bold text-cyan-400 text-sm flex items-center gap-2">
+                  <Droplets className="h-4 w-4" /> 1. River Salinity & Physical Hydrodynamics
+                </h4>
+                <div className="mt-3 space-y-2.5 text-[11px] leading-relaxed">
+                  <p>
+                    <b className="text-white">Electrical Conductivity (EC in µmho/cm or µS/cm):</b> Quantifies water&apos;s ionic conduction capability, directly proportional to dissolved salt concentration. In coastal hydrology, 1 µmho/cm = 1 µS/cm (microsiemens per centimeter). 1,000 µS/cm = 1 dS/m (decisiemens per meter).
+                  </p>
+                  <p>
+                    <b className="text-white">Total Dissolved Solids (TDS Approximation):</b> For coastal deltaic river waters, TDS in mg/L is empirically estimated as:
+                    <span className="block mt-1 font-mono text-[10px] text-cyan-300 bg-slate-900 p-2 rounded border border-slate-800/80">
+                      TDS (mg/L) ≈ EC (µS/cm) × 0.64
+                    </span>
+                    Thus, 1,500 µS/cm corresponds to ~960 mg/L TDS, and 3,000 µS/cm corresponds to ~1,920 mg/L TDS.
+                  </p>
+                  <p>
+                    <b className="text-white">Chloride (Cl⁻ in PPM or mg/L):</b> The primary marine anion. Corrodes steel and pump impellers, and disrupts freshwater fish and wetland ecology when sustained above 600 PPM.
+                  </p>
+                  <p>
+                    <b className="text-white">Sodium Stoichiometry (Na⁺ via Dittmar Principle):</b> In open marine and estuarine seawater, the ratio of dissolved conservative ions remains constant regardless of dilution. Applying the oceanic stoichiometric mass ratio:
+                    <span className="block mt-1 font-mono text-[10px] text-cyan-300 bg-slate-900 p-2 rounded border border-slate-800/80">
+                      Estimated Na⁺ (mg/L) = Chloride (PPM) × 0.556
+                    </span>
+                    This prevents assuming an idealized pure NaCl solution and reflects multi-salt estuarine dynamics.
+                  </p>
+                </div>
+              </section>
+
+              {/* Section 2: Public Health & Agronomic Thresholds */}
+              <section className="bg-slate-950/90 p-4 rounded-xl border border-slate-800">
+                <h4 className="font-bold text-cyan-400 text-sm flex items-center gap-2">
+                  <Sprout className="h-4 w-4" /> 2. Health & Agronomic Guidelines
+                </h4>
+                <div className="mt-3 space-y-2.5 text-[11px] leading-relaxed">
+                  <p>
+                    <b className="text-white">WHO Aesthetic Taste Limit (200 mg/L Na⁺):</b> The formal guideline established in the <i>WHO Guidelines for Drinking-water Quality</i>. At concentrations above 200 mg/L, drinking water tastes distinctly brackish. While non-toxic acutely, long-term consumption in coastal communities contributes significantly to hypertension and renal stress.
+                  </p>
+                  <p>
+                    <b className="text-white">FAO 29 Irrigation Salinity Ceiling (2.0 dS/m ECw):</b> <i>FAO Irrigation and Drainage Paper 29</i> sets 2.0 dS/m (2,000 µmho/cm) as the severe restriction boundary for Boro rice irrigation. Diverting canal water exceeding this threshold induces root-zone osmotic drought, inhibits nutrient uptake, and causes spikelet sterility during reproductive flowering.
+                  </p>
+                  <p>
+                    <b className="text-white">Capillary Upward Flux in Coastal Polders:</b> During dry-season months (February–May), high surface evaporation pulls shallow saline groundwater upward into agricultural topsoil. Irrigating with brackish canal water accelerates topsoil salinization exponentially.
+                  </p>
+                </div>
+              </section>
+
+              {/* Section 3: Treatment Limits & Humanitarian Staging */}
+              <section className="bg-slate-950/90 p-4 rounded-xl border border-slate-800">
+                <h4 className="font-bold text-cyan-400 text-sm flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4" /> 3. Treatment Infrastructure & Sphere Logistics
+                </h4>
+                <div className="mt-3 space-y-2.5 text-[11px] leading-relaxed">
+                  <p>
+                    <b className="text-white">Pond Sand Filter (PSF) Barrier Limit (1,500 µmho/cm):</b> Community slow sand filtration physically traps suspended silt and pathogens, but <i>cannot remove dissolved ionic salts</i>. When surrounding tidal river salinity breaches 1,500 µS/cm, intake gates must close immediately to prevent saline contamination of drinking ponds.
+                  </p>
+                  <p>
+                    <b className="text-white">Mobile Reverse Osmosis (RO) Staging Math:</b> Scaled against the <i>Sphere Humanitarian Charter minimum emergency standard</i> (15 Liters/person/day for drinking and basic sanitation) and standard trailer-mounted DPHE mobile RO treatment plant capacity (10,000 Liters/day) covering an initial 5% acute hotspot population:
+                  </p>
+                  <div className="p-2.5 bg-slate-900 rounded-lg font-mono text-[10px] text-cyan-300 border border-slate-800">
+                    RO Units Needed = ceil( (Vulnerable Population × 0.05 × 15 L/day) ÷ 10,000 L/day capacity )
+                  </div>
+                </div>
+              </section>
+
+              {/* Section 4: Operational Risk Classification Matrix */}
+              <section className="bg-slate-950/90 p-4 rounded-xl border border-slate-800">
+                <h4 className="font-bold text-cyan-400 text-sm flex items-center gap-2">
+                  <Gauge className="h-4 w-4" /> 4. Operational Risk Threshold Bands
+                </h4>
+                <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-[11px]">
+                  <div className="p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/60">
+                    <span className="font-bold text-emerald-400 block text-xs">Low Risk (&lt;1,500 µS/cm)</span>
+                    <span className="text-slate-300 text-[10px] block mt-1 leading-snug">
+                      Potable with standard PSF. Unrestricted agricultural diversion. Normal municipal water committee operations.
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-amber-950/40 border border-amber-800/60">
+                    <span className="font-bold text-amber-400 block text-xs">Medium Risk (1,500–3,000 µS/cm)</span>
+                    <span className="text-slate-300 text-[10px] block mt-1 leading-snug">
+                      PSF intake gates closed. Household rainwater rationing active. Union Parishad inspects embankment sluices.
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-800/60">
+                    <span className="font-bold text-rose-400 block text-xs">High Risk (&gt;3,000 µS/cm)</span>
+                    <span className="text-slate-300 text-[10px] block mt-1 leading-snug">
+                      Acute marine ingress. Full irrigation moratorium. Deploy mobile RO water trucks to designated union hotspots.
+                    </span>
+                  </div>
+                </div>
+              </section>
+
+              {/* Section 5: Machine Learning Architecture & Monotonic Guarantees */}
+              <section className="bg-slate-950/90 p-4 rounded-xl border border-slate-800">
+                <h4 className="font-bold text-cyan-400 text-sm flex items-center gap-2">
+                  <Cpu className="h-4 w-4" /> 5. Machine Learning System & Monotonic Constraints
+                </h4>
+                <div className="mt-3 space-y-2.5 text-[11px] leading-relaxed">
+                  <p>
+                    <b className="text-white">Monotonic Ordinal Formulation:</b> Risk is ordinal (0 &lt; 1 &lt; 2). Rather than unconstrained multiclass trees, the engine trains two binary LightGBM classifiers (P(EC &ge; 1,500) and P(EC &ge; 3,000)) with monotonic constraints:
+                    <span className="block mt-1 font-mono text-[10px] text-cyan-300 bg-slate-900 p-2 rounded border border-slate-800/80">
+                      Discharge constraint = -1 &nbsp;|&nbsp; 30D Lag constraint = -1 &nbsp;|&nbsp; Current EC constraint = +1
+                    </span>
+                    This mathematically prevents non-physical inversion: reducing upstream freshwater discharge can never predict a drop in future salinity.
+                  </p>
+                  <p>
+                    <b className="text-white">Probability Calibration via Temperature Scaling:</b> Raw boosting probability outputs often suffer from overconfidence. The pipeline applies logit-space Temperature Scaling (Guo et al., 2017) calibrated on held-out validation years to ensure predicted percentages reflect true empirical likelihoods.
+                  </p>
+                  <p>
+                    <b className="text-white">Strict Out-of-Time Temporal Split:</b> Models are trained strictly on pre-2023 data and evaluated out-of-time on 2023–2024 test sets, preventing data leakage common in random k-fold cross-validation.
+                  </p>
+                </div>
+              </section>
+
+              {/* Section 6: Station Geographical Characteristics */}
+              <section className="bg-slate-950/90 p-4 rounded-xl border border-slate-800">
+                <h4 className="font-bold text-cyan-400 text-sm flex items-center gap-2">
+                  <Compass className="h-4 w-4" /> 6. Southwest Coastal Station Registry
+                </h4>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-[11px] min-w-[500px]">
+                    <thead>
+                      <tr className="bg-slate-900 text-slate-400 font-mono text-[10px] uppercase border-b border-slate-800">
+                        <th className="p-2">Station Ref</th>
+                        <th className="p-2">Name & Upazila</th>
+                        <th className="p-2">River System</th>
+                        <th className="p-2">Distance to Sea</th>
+                        <th className="p-2">Hydrological Sensitivity</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/80 text-slate-300 font-mono">
+                      <tr>
+                        <td className="p-2 font-bold text-cyan-400">SW1</td>
+                        <td className="p-2 font-sans text-white">Bagerhat Sadar</td>
+                        <td className="p-2 font-sans">Alaipur Khal Daratona</td>
+                        <td className="p-2">~92 km</td>
+                        <td className="p-2 font-sans text-[10px] text-slate-400">Inland buffer. Strongly protected by Gorai freshwater flush until late dry season.</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-cyan-400">SW135</td>
+                        <td className="p-2 font-sans text-white">Shyamnagar Coastal</td>
+                        <td className="p-2 font-sans">Kholpetua River</td>
+                        <td className="p-2">~68 km</td>
+                        <td className="p-2 font-sans text-[10px] text-slate-400">Direct estuarine marine exposure. Severe tidal pumping and high salinity saturation.</td>
+                      </tr>
+                      <tr>
+                        <td className="p-2 font-bold text-cyan-400">SW242</td>
+                        <td className="p-2 font-sans text-white">Koyra Estuary</td>
+                        <td className="p-2 font-sans">Kobadak River</td>
+                        <td className="p-2">~67 km</td>
+                        <td className="p-2 font-sans text-[10px] text-slate-400">Tidal delta fringe. Prone to embankment overtopping and severe dry-season baseflow deficit.</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Validation Benchmarks Modal */}
       {showValidation && (
         <div className="fixed inset-0 z-[1000] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
@@ -500,7 +710,7 @@ export default function Dashboard() {
               </div>
               <button 
                 onClick={() => setShowValidation(false)} 
-                className="text-slate-400 hover:text-white text-xs font-mono px-2 py-1 rounded bg-slate-800"
+                className="text-slate-400 hover:text-white text-xs font-mono px-2 py-1 rounded bg-slate-800 transition"
               >
                 Close ✕
               </button>
@@ -563,7 +773,7 @@ export default function Dashboard() {
               <h3 className="text-base font-bold text-white">Data Provenance & Scientific Methodology</h3>
               <button 
                 onClick={() => setShowProvenance(false)} 
-                className="text-slate-400 hover:text-white text-xs font-mono px-2 py-1 rounded bg-slate-800"
+                className="text-slate-400 hover:text-white text-xs font-mono px-2 py-1 rounded bg-slate-800 transition"
               >
                 Close ✕
               </button>
